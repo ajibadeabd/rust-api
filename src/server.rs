@@ -4,6 +4,7 @@ extern crate rocket;
 
 mod app;
 mod modules;
+mod database;
 
 use modules::{middleware};
 use app::{
@@ -19,9 +20,9 @@ use app::{
 #[launch]
 fn rocket() -> _ {
     // rocket= mount_user_route(rocket);
-
+let db=database::Database::init();
     let rocket = rocket::build()
-
+.manage(db)
     .attach(middleware::IncomingRequest)
     .mount("/api", routes![health_checker_handler,add_user]);
      rocket
