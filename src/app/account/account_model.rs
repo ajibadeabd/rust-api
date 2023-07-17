@@ -7,7 +7,7 @@ use mongodb::{
 use serde::{Serialize, Deserialize};
 
 use super::account_type::AccountData;
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct Account {
         #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
         pub id: Option<ObjectId>,

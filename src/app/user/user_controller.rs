@@ -43,7 +43,7 @@ pub fn sign_up(db: &State<Database>,mut user:Json<User>)
 pub fn sign_in(db: &State<Database>,user:Json<UserLoginRequestType>)
 ->ResponseType<Option<LoginResponse>>
 {
-    let user_detail = db.user().find_one(&user.email);
+    let user_detail = db.user().find_one("email",&user.email);
     
     match user_detail {
         Ok(None)=>Err(Status::BadGateway),

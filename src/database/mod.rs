@@ -53,6 +53,13 @@ impl Database {
         let transaction_schema: Collection<transaction::Transaction> = db.collection("Transaction");
         Database { user_schema, transaction_schema ,account_schema }
     }
+    pub fn copy(&self) -> Database {
+        Database {
+            user_schema: self.user_schema.clone(),
+            transaction_schema: self.transaction_schema.clone(),
+            account_schema: self.account_schema.clone(),
+        }
+    }
     pub fn user(&self)->user::Init{
         user::Init::init(&self.user_schema)
     }
