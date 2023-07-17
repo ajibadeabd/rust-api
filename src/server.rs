@@ -27,7 +27,7 @@ let db=database::Database::init();
 
     .mount("/api", routes![add_user,sign_in]);
     let rocket = rocket.mount("/api/account", routes![account_creation])
-    .attach(middleware::IncomingRequest {  db: Arc::new(db.copy()) })
+    .attach(middleware::IncomingRequest {  db: Arc::new(db.copy()) ,user_data:None})
     .manage(db);
 
      rocket
