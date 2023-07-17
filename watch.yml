@@ -1,0 +1,3 @@
+# watch.yml
+- watch: ["src/**/*.rs", "Cargo.toml"]
+  command: "cargo run"

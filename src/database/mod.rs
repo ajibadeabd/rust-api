@@ -2,19 +2,25 @@ use std::env;
 use dotenv::dotenv;
 
 use mongodb::{
-    sync::{Client, Collection},
+    bson::doc,
+    options::IndexOptions,
+    sync::{Client, Collection}, IndexModel,
 };
 
+use super::app::{
+    user::{user_model as user},
+    account::{account_model as account}
+};
 
-pub mod user;
-mod product;
+pub mod transaction;
 
 
 
 
 pub struct Database {
     user_schema: Collection<user::User>,
-    product_schema: Collection<product::Product>,
+    transaction_schema:Collection<transaction::Transaction>,
+    account_schema:Collection<account::Account>
 }
 impl Database {
     pub fn init() -> Self {
@@ -25,11 +31,38 @@ impl Database {
         };
         let client = Client::with_uri_str(uri).unwrap();
         let db = client.database("rustDB");
+
         let user_schema: Collection<user::User> = db.collection("User");
-        let product_schema: Collection<product::Product> = db.collection("Product");
-        Database { user_schema, product_schema }
+        let email_index = IndexModel::builder()
+        .keys(doc! {"email": 1})
+        .options(IndexOptions::builder()
+            .unique(true)
+            .build())
+        .build();
+    let password_index = IndexModel::builder()
+        .keys(doc! {"password": 1})
+        .options(IndexOptions::builder()
+            .hidden(true)
+            .build())
+        .build();
+
+    let user_schema_index_models = vec![email_index,password_index];
+
+    user_schema.create_indexes(user_schema_index_models,None);
+        let account_schema: Collection<account::Account> = db.collection("Account");
+        let transaction_schema: Collection<transaction::Transaction> = db.collection("Transaction");
+        Database { user_schema, transaction_schema ,account_schema }
     }
     pub fn user(&self)->user::Init{
         user::Init::init(&self.user_schema)
     }
+    pub fn account(&self)->account::Init{
+        account::Init::init(&self.account_schema)
+    }
+    pub fn transaction(&self)->transaction::Init{
+        transaction::Init::init(&self.transaction_schema)
+    }
 }
+// fn db()-> Database{
+//      Database::init()
+//     }

@@ -1,68 +1,34 @@
 
 use rocket::{ http::Status, serde::json::Json,State, figment::value::Value};
-use serde::{Serialize,Deserialize};
 use crate::{
     database::{
-        user::User,
         Database
-    },
-    // app::
+    }, app::user::types::LoginResponse ,
+    modules::{generic_type::ResponseType}
 };
-use mongodb::{
-    bson::oid::ObjectId,
-    sync::{Collection},
-    results::InsertOneResult
+use super::{
+    user_model::User,
+    user_controller,
+    types::UserLoginRequestType
 };
 
-#[derive(Serialize)]
-pub struct GenericResponse {
-    pub status: String,
-    pub message: String,
-}
-
-// #[derive(Debug, Deserialize)]
-// pub struct User {
-//     username: String,
-//     password: String,
-// }
-
-#[get("/user")]
-pub async fn health_checker_handler() -> rocket::response::status::Custom<Json<GenericResponse>> {
-    const MESSAGE: &str = "Build Simple CRUD API with Rust and Rocket";
-
-    let response_json = GenericResponse {
-        status: "success".to_string(),
-        message: MESSAGE.to_string(),
-    };
-
-    rocket::response::status::Custom(Status::Ok, Json(response_json))
-}
- 
 #[post("/sign_up", data = "<user>")]
 pub async fn add_user(
     db: &State<Database>,
     user: Json<User>) 
-    -> Result<rocket::response::status::Custom<Json<GenericResponse>>,Status>
+    ->rocket::response::status::Custom<ResponseType<Option<String>>>
      {
-      let user_detail = db.user().find_one(&user.name);
- 
-    let _=match user_detail {
-        Ok(user) => Err(user.unwrap().name.to_string() +"already exist"),
-        _=>Ok(""),
-    };
+       let response =  user_controller::sign_up(db,user);
+       rocket::response::status::Custom(Status::Ok, response)
+}
 
-      let user_detail = db.user().save(&user);
 
-      match user_detail {
-          Ok(user_id) => Ok({
-            let response_json = GenericResponse {
-                status: "success".to_string(),
-                message: user.name.to_string() + " account created"
-            };
-            rocket::response::status::Custom(Status::Ok, Json(response_json))
-          }),
-          Err(_) => Err(Status::InternalServerError),
-      }
-
-    // Json(response_json)
+#[post("/sign_in", data = "<user>")]
+pub async fn sign_in(
+    db: &State<Database>,
+    user: Json<UserLoginRequestType>) 
+    ->rocket::response::status::Custom<ResponseType<Option<LoginResponse>>>
+     {
+       let response =  user_controller::sign_in(db,user);
+       rocket::response::status::Custom(Status::Ok, response)
 }

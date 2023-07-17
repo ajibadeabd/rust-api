@@ -8,12 +8,12 @@ mod database;
 
 use modules::{middleware};
 use app::{
-    user::{
-        user_route::{health_checker_handler,add_user},
-        // mount as mount_user_route
-    },
+    user::user_route::{add_user,sign_in},
+    account::account_route::{ account_creation }
+    
 };
-
+// use crate::app::
+use serde::Serialize;
 
  
 
@@ -23,7 +23,9 @@ fn rocket() -> _ {
 let db=database::Database::init();
     let rocket = rocket::build()
 .manage(db)
-    .attach(middleware::IncomingRequest)
-    .mount("/api", routes![health_checker_handler,add_user]);
+    .mount("/api", routes![add_user,sign_in]);
+    let rocket = rocket.mount("/api/account", routes![account_creation])
+    .attach(middleware::IncomingRequest);
+
      rocket
 }
