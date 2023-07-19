@@ -16,7 +16,7 @@ pub mod transaction;
 
 
 
-
+#[derive(Debug)]
 pub struct Database {
     user_schema: Collection<user::User>,
     transaction_schema:Collection<transaction::Transaction>,

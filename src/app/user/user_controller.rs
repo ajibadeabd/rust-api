@@ -10,7 +10,7 @@ use crate::{
     },
     modules::{
         generic_type::{ResponseType, GenericResponse},
-        util::{self, encode_token_and_refresh}}
+        util::{self, encode_token_and_refresh}, response_handler::{CustomError, CustomResult, generic_response}}
 };
 
 use super::{
@@ -34,26 +34,25 @@ pub fn sign_up(db: &State<Database>,mut user:Json<User>)
           Json(response_json)
         }),
         Err(err) => {
-            println!("email already registered");
-            return Err(Status::BadRequest)},
+            return Err(CustomError::BadRequest("Email already registered".to_string()))},
     }
 }
 
 
 pub fn sign_in(db: &State<Database>,user:Json<UserLoginRequestType>)
-->ResponseType<Option<LoginResponse>>
+-> Result<CustomResult, CustomError>
+
 {
     let user_detail = db.user().find_one("email",&user.email);
     
     match user_detail {
-        Ok(None)=>Err(Status::BadGateway),
-        Err(_)=>Err(Status::BadGateway),
+        Ok(None)=>Err(CustomError::NotFound("User not found".to_string())),
+        Err(_)=>Err(CustomError::NotFound("Unable to log in".to_string())),
         Ok(Some(registered_user))=>{
           let is_password_valid  = verify(&user.password,&registered_user.password);
           if let Ok(false) =is_password_valid{
-            println!("pass wrong");
+           return  Err(CustomError::NotFound("Not Found".to_string()))
           }
-          println!("{:?}",registered_user.id.unwrap());
           let token = encode_token_and_refresh(registered_user.id.unwrap(), "secret","",3,4000000000).unwrap();
           
           let login_response = LoginResponse {
@@ -61,14 +60,15 @@ pub fn sign_in(db: &State<Database>,user:Json<UserLoginRequestType>)
             access_token:token.token,
             refresh_token:token.refresh_token
         };
-          
-          let response_json = GenericResponse {
-            status: "success".to_string(),
-            message: user.email.to_string() + "has successfully logged in.",
-            data: Some(login_response),
-        };
-        Ok(Json(response_json))
+        
+         Ok(generic_response(
+             "has successfully logged in.",
+            Some(login_response),
+            None
+        ))
         },
 
     }
+    
 }
+ 

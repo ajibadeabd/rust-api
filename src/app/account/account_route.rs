@@ -2,7 +2,7 @@
 use rocket::{ http::Status, serde::json::Json,State, figment::value::Value};
 
 use crate::{
-    modules::generic_type::ResponseType,
+    modules::{generic_type::ResponseType, response_handler::{CustomError, CustomResult}},
     database::Database};
 use super::{
     account_type::AccountData,
@@ -13,9 +13,11 @@ use super::{
 pub async fn account_creation(
     db: &State<Database>,
     account_data: Json<AccountData>) 
-    ->rocket::response::status::Custom<ResponseType<Option<String>>>
+-> Result<CustomResult, CustomError>
+
+    // ->rocket::response::status::Custom<ResponseType<Option<String>>>
      {
-       let response =  account_controller::create_account(db, account_data);
-       rocket::response::status::Custom(Status::Created, response)
+       account_controller::create_account(db, account_data)
+    //    rocket::response::status::Custom(Status::Created, response)
 }
 

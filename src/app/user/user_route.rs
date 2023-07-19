@@ -4,7 +4,7 @@ use crate::{
     database::{
         Database
     }, app::user::types::LoginResponse ,
-    modules::{generic_type::ResponseType}
+    modules::{generic_type::ResponseType, middleware_copy::StartTime, response_handler::{ CustomError, CustomResult}}
 };
 use rocket::request::{Request};
 use super::{
@@ -28,36 +28,8 @@ pub async fn add_user(
 pub fn sign_in(
     db: &State<Database>,
     user: Json<UserLoginRequestType>,
-    request: &mut Request<'_>,
 )
-    ->rocket::response::status::Custom<ResponseType<Option<LoginResponse>>>
-     {
-       let response =  user_controller::sign_in(db,user);
-       rocket::response::status::Custom(Status::Ok, response)
-}
 
-// #[post("/sign_in", data = "<user>")]
-// pub async fn sign_in(
-//     db: &State<Database>,
-//     user: Json<UserLoginRequestType>,
-//     user_data: &State<Option<User>>,
-// ) -> rocket::response::status::Custom<ResponseType<Option<LoginResponse>>> {
-//     match user_data.as_ref() {
-//         Some(user) => {
-//             // Access the user data here
-//             let name = &user.name;
-//             println!("User: {}", name);
-//             // Continue with your sign-in logic using the user data
-            
-//             let response = user_controller::sign_in(db, user);
-//             rocket::response::status::Custom(Status::Ok, response)
-//         }
-//         None => {
-//             // User data not available
-//             rocket::response::status::Custom(
-//                 Status::InternalServerError,
-//                 ResponseType::new_error("User data not found"),
-//             )
-//         }
-//     }
-// }
+-> Result<CustomResult, CustomError>{
+     user_controller::sign_in(db,user)
+}

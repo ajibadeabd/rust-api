@@ -8,7 +8,7 @@ mod database;
 
 use std::sync::Arc;
 
-use modules::{middleware};
+use modules::{middleware,middleware_copy};
 use app::{
     user::user_route::{add_user,sign_in},
     account::account_route::{ account_creation }
@@ -27,8 +27,11 @@ let db=database::Database::init();
 
     .mount("/api", routes![add_user,sign_in]);
     let rocket = rocket.mount("/api/account", routes![account_creation])
-    .attach(middleware::IncomingRequest {  db: Arc::new(db.copy()) ,user_data:None})
+    // .attach(middleware::IncomingRequest {  db: Arc::new(db.copy()) })
+    .attach(middleware_copy::RequestTimer)
     .manage(db);
 
      rocket
 }
+
+
