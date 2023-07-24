@@ -9,10 +9,13 @@ use mongodb::{
 
 use super::app::{
     user::{user_model as user},
-    account::{account_model as account}
+    account::{
+        account_model as account,
+        transaction_model as transaction
+    },
+    
 };
 
-pub mod transaction;
 
 
 

@@ -4,7 +4,7 @@ use crate::{
     database::{
         Database
     }, app::user::types::LoginResponse ,
-    modules::{generic_type::ResponseType, middleware_copy::StartTime, response_handler::{ CustomError, CustomResult}}
+    modules::{generic_type::ResponseType,  response_handler::{ CustomError, CustomResult}}
 };
 use rocket::request::{Request};
 use super::{
@@ -17,10 +17,9 @@ use super::{
 pub async fn add_user(
     db: &State<Database>,
     user: Json<User>) 
-    ->rocket::response::status::Custom<ResponseType<Option<String>>>
+-> Result<CustomResult, CustomError>
      {
-       let response =  user_controller::sign_up(db,user);
-       rocket::response::status::Custom(Status::Ok, response)
+      user_controller::sign_up(db,user)
 }
 
 
@@ -28,8 +27,11 @@ pub async fn add_user(
 pub fn sign_in(
     db: &State<Database>,
     user: Json<UserLoginRequestType>,
-)
-
--> Result<CustomResult, CustomError>{
+)-> Result<CustomResult, CustomError>{
      user_controller::sign_in(db,user)
 }
+
+// #[get("/")]
+// pub fn get_all_user(db: &State<Database>)-> Result<CustomResult, CustomError>{
+//      user_controller::get_all_user(db)
+// }

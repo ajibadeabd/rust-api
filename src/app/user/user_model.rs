@@ -1,10 +1,11 @@
 
 use mongodb::{
-    bson::{oid::ObjectId,doc},
+    bson::{oid::ObjectId,doc, Document},
     sync::{Collection},
-    results::InsertOneResult, options::FindOneOptions
+    results::{InsertOneResult, UpdateResult}, options::{FindOneOptions, UpdateModifications, UpdateOptions, FindOptions}
 };
 use chrono::{DateTime, Utc};
+use rocket::http::{ext::IntoCollection, private::SmallVec};
 use serde::{Serialize, Deserialize};
 
 
@@ -15,18 +16,33 @@ extern crate bcrypt;
 
 use bcrypt::{DEFAULT_COST, hash, verify};
 
+use serde::Serializer;
+
+pub fn serialize_object_id<S>(object_id: &Option<ObjectId>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match object_id {
+      Some(ref object_id) => serializer.serialize_some(object_id.to_string().as_str()),
+      None => serializer.serialize_none()
+    }
+}
+
 
 #[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct User {
-        #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+        #[serde(
+            rename = "_id",
+            skip_serializing_if = "Option::is_none",
+            serialize_with = "serialize_object_id"
+        )]
         pub id: Option<ObjectId>,
         pub first_name: String,
         pub last_name: String,
         pub email: String,
+        pub accounts: Option<Vec<ObjectId>>,
         pub password: String,
-        // #[serde(skip)]
         pub created_at: Option<DateTime<Utc>>,
-        // #[serde(skip)]
         pub updated_at: Option<DateTime<Utc>>,
 }
  
@@ -48,9 +64,15 @@ impl<'a> Init<'a> {
     pub fn find_one(&self, find_by: &str,find_with: &str)->Result<std::option::Option<User>, mongodb::error::Error> {
         self.col.find_one(doc! {find_by:find_with}, None)
     }
-    // pub fn find_one(&self, email: &str) -> Result<Option<User>, mongodb::error::Error> {
-    //     let options = FindOneOptions::builder().projection(doc! { "_id": 0 }).build();
-    //     self.col.find_one(doc! {"email": email}, options)
+    pub fn find_by_id(&self, object_id: &ObjectId)->Result<std::option::Option<User>, mongodb::error::Error> {
+        self.col.find_one(doc!{"_id":object_id}, None)
+    }
+    pub fn update_one(&self, filter_by:Document,update:UpdateModifications,update_option:Option<UpdateOptions>)->Result<UpdateResult, mongodb::error::Error> {
+        self.col.update_one(filter_by,update,update_option)
+    }
+
+    // pub fn find_all(&self, filter_by:Document,find_option:Option<FindOptions>)->SmallVec<mongodb::sync::Cursor<User>, mongodb::error::Error> {
+    //     self.col.find(filter_by,find_option).into_collection()
     // }
     
 }

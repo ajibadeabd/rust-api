@@ -1,7 +1,5 @@
-
-
-
 use bcrypt::{DEFAULT_COST, hash, verify};
+use mongodb::{bson::{oid::ObjectId, doc}, options::UpdateModifications, Cursor};
 use rocket::{ http::Status, serde::json::Json,State, figment::value::Value};
 use serde::{Serialize,Deserialize};
 use crate::{
@@ -10,28 +8,44 @@ use crate::{
     },
     modules::{
         generic_type::{ResponseType, GenericResponse},
-        util::{self, encode_token_and_refresh}, response_handler::{CustomError, CustomResult, generic_response}}
+        util::{self, encode_token_and_refresh}, response_handler::{CustomError, CustomResult, generic_response}
+    }, app::account::{account_service::create_new_account, account_model::Account
+        }
 };
 
 use super::{
     user_model::User,
-    types::{UserLoginRequestType, LoginResponse, }
+    types::{UserLoginRequestType, LoginResponse, }, user_service::{update_user_account, self}
 };
  
 pub fn sign_up(db: &State<Database>,mut user:Json<User>)
--> ResponseType<Option<String>>
+// -> ResponseType<Option<String>>
+-> Result<CustomResult, CustomError>
 {
-      
     
     let user_detail = db.user().save(&mut user);
     match user_detail {
-        Ok(_) => Ok({
-          let response_json = GenericResponse {
+        Ok(res) => Ok({
+            let  new_account_data = Account::new(
+                "INTERNAL".to_string(),
+                "NG".to_string(),
+                res.inserted_id.as_object_id() 
+            );
+            let user_account = create_new_account(db,new_account_data);
+                if let Ok(account) = user_account {
+            let update_doc = UpdateModifications::Document( doc! { "$set": { "accounts": [account.inserted_id] }  });
+           let s = update_user_account(db,doc!{"_id": res.inserted_id.as_object_id() },update_doc,None);
+                }
+            let response_json: GenericResponse<Option<String>> = GenericResponse {
               status: "success".to_string(),
               message: user.email.to_string() + " account created",
               data:None
           };
-          Json(response_json)
+          generic_response::<Option<String>>(
+            "has successfully logged in.",
+           None,
+           None
+       )
         }),
         Err(err) => {
             return Err(CustomError::BadRequest("Email already registered".to_string()))},
@@ -71,4 +85,19 @@ pub fn sign_in(db: &State<Database>,user:Json<UserLoginRequestType>)
     }
     
 }
+// pub fn get_all_user(db: &State<Database>)
+// -> Result<CustomResult, CustomError>
+
+// {
+
+//     let all_user = user_service::get_all_user(db).unwrap();
+     
+        
+//          Ok(generic_response::<mongodb::sync::Cursor<User>>(
+//              "users fetched successfully.",
+//             Some(all_user ),
+//             None
+//         )) 
+    
+// }
  

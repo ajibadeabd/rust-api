@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use mongodb::{
-    bson::{oid::ObjectId,doc},
+    bson::{oid::ObjectId,doc, Document},
     sync::{Collection},
-    results::InsertOneResult
+    results::InsertOneResult, options::FindOneOptions
 };
 use serde::{Serialize, Deserialize};
 
@@ -20,13 +20,13 @@ pub struct Account {
         pub created_at: Option<DateTime<Utc>>,
 }
 impl Account {
-    fn new()->Self{
+    pub fn new(channel:String,currency:String,user_id:Option<ObjectId>)->Self{
         Self {
             locked_balance:0.0,
             balance:0.0,
-            currency:"NG".to_string(),
-            channel:"INTERNAL".to_string(),
-            user_id:None,
+            currency,
+            channel,
+            user_id,
             id:None,
             created_at: Some(Utc::now()),
             updated_at: Some(Utc::now()),
@@ -44,14 +44,15 @@ impl<'a> Init<'a> {
         Init { col }
     }
 
-    pub fn save(&self, account: &AccountData)->Result<InsertOneResult, mongodb::error::Error> {
-        let mut new_account = Account::new();
-        new_account.channel = account.channel.to_string();
-        new_account.currency = account.currency.to_string();
-        self.col.insert_one(new_account, None)
+    pub fn save(&self, account: &Account)->Result<InsertOneResult, mongodb::error::Error> {
+        self.col.insert_one(account, None)
     }
-    pub fn find_one(&self, user: &str)->Result<std::option::Option<Account>, mongodb::error::Error> {
-        self.col.find_one(doc! {"":user}, None)
+    pub fn find_one(&self, find_by:Document,filter_by:Option<FindOneOptions>)->Result<std::option::Option<Account>, mongodb::error::Error> {
+        self.col.find_one(find_by,filter_by)
+    }
+    pub fn find_by_id(&self, object_id: &ObjectId)->Result<std::option::Option<Account>, mongodb::error::Error> {
+       let s = doc!{"_id":object_id};
+        self.col.find_one(doc!{"_id":object_id}, None)
     }
 }
  

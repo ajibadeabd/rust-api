@@ -1,9 +1,7 @@
-use rocket::serde::json::Json;
 use serde::{Serialize, Deserialize};
 use std::io::Cursor;
 use rocket::http::Status;
 use rocket::request::Request;
-use rocket::response::{content, status};
 use rocket::response::{self, Response, Responder};
 use rocket::http::ContentType;
 
@@ -90,6 +88,7 @@ impl std::fmt::Display for CustomResult {
 impl<'r> Responder<'r, 'static> for CustomResult {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         // serialize struct into json string
+        println!("{:?}",&self.status_code);
         Response::build()
             .status(Status { code: self.status_code.unwrap()})
             .header(ContentType::JSON)
@@ -109,7 +108,8 @@ where
     };
 
     let json_response = serde_json::to_string(&response_json).unwrap();
-    CustomResult { result: json_response ,status_code:Some(code).unwrap_or(Some(200))}
+    CustomResult { result: json_response ,status_code:Some(code.unwrap_or(200))
+    }
 }
 
  

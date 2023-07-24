@@ -11,12 +11,9 @@ use std::sync::Arc;
 use modules::{middleware,middleware_copy};
 use app::{
     user::user_route::{add_user,sign_in},
-    account::account_route::{ account_creation }
+    account::account_route::{ account_creation ,deposit}
     
 };
-// use crate::app::
-use serde::Serialize;
-
  
 
 #[launch]
@@ -26,9 +23,7 @@ let db=database::Database::init();
     let rocket = rocket::build()
 
     .mount("/api", routes![add_user,sign_in]);
-    let rocket = rocket.mount("/api/account", routes![account_creation])
-    // .attach(middleware::IncomingRequest {  db: Arc::new(db.copy()) })
-    .attach(middleware_copy::RequestTimer)
+    let rocket = rocket.mount("/api/account", routes![account_creation,deposit])
     .manage(db);
 
      rocket
