@@ -23,7 +23,8 @@ use super::app::{
 pub struct Database {
     user_schema: Collection<user::User>,
     transaction_schema:Collection<transaction::Transaction>,
-    account_schema:Collection<account::Account>
+    account_schema:Collection<account::Account>,
+    client:Client
 }
 impl Database {
     pub fn init() -> Self {
@@ -54,10 +55,13 @@ impl Database {
     user_schema.create_indexes(user_schema_index_models,None);
         let account_schema: Collection<account::Account> = db.collection("Account");
         let transaction_schema: Collection<transaction::Transaction> = db.collection("Transaction");
-        Database { user_schema, transaction_schema ,account_schema }
+        Database { 
+            client,
+            user_schema, transaction_schema ,account_schema }
     }
     pub fn copy(&self) -> Database {
         Database {
+            client: self.client.clone(),
             user_schema: self.user_schema.clone(),
             transaction_schema: self.transaction_schema.clone(),
             account_schema: self.account_schema.clone(),
@@ -71,6 +75,9 @@ impl Database {
     }
     pub fn transaction(&self)->transaction::Init{
         transaction::Init::init(&self.transaction_schema)
+    }
+    pub fn client(&self)->Client{
+        self.client.clone()
     }
 }
 // fn db()-> Database{

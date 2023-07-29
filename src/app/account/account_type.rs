@@ -14,6 +14,14 @@ pub struct DepositAccountData {
     pub amount:f64
 }
 
+#[derive(Debug, Clone,  Serialize,  Deserialize)]
+pub struct WithdrawAccountData {
+    pub currency:String,
+    pub amount:f64,
+    pub bank_account_number:i64,
+    pub bank_account_name:String,
+    pub bank_code:i32
+}
 
 #[derive(Debug, Clone,  Serialize,  Deserialize)]
 pub enum TransactionStatus {

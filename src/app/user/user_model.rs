@@ -27,7 +27,18 @@ where
       None => serializer.serialize_none()
     }
 }
-
+pub fn serialize_object_ids<S>(object_ids: &Option<Vec<ObjectId>>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match object_ids {
+        Some(ref object_ids) => {
+            let object_id_strings: Vec<_> = object_ids.iter().map(|id| id.to_string()).collect();
+            serializer.serialize_some(&object_id_strings)
+        }
+        None => serializer.serialize_none(),
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct User {
@@ -40,6 +51,11 @@ pub struct User {
         pub first_name: String,
         pub last_name: String,
         pub email: String,
+        #[serde(
+            // rename = "_id",
+            // skip_serializing_if = "Option::is_none",
+            serialize_with = "serialize_object_ids"
+        )]
         pub accounts: Option<Vec<ObjectId>>,
         pub password: String,
         pub created_at: Option<DateTime<Utc>>,

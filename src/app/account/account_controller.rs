@@ -1,4 +1,4 @@
-use mongodb::{bson::doc, options::UpdateModifications};
+use mongodb::{bson::{doc, oid::ObjectId, Bson}, options::UpdateModifications};
 use rocket::{State, serde::json::Json, http::Status};
 
 use crate::{
@@ -6,11 +6,11 @@ use crate::{
     database::Database, modules::{
         response_handler::{
             CustomError, CustomResult, generic_response
-        }
+        }, provider::payment::paystack::TransactionDTO
     }, 
     app::{user::{
         user_model::User, user_service::update_user_account
-    },
+    }, account::transaction_service
 },
 modules::{
     generic_type::{ResponseType, GenericResponse},
@@ -18,9 +18,8 @@ modules::{
 };
 
 use super::{
-    account_type::{AccountData, DepositAccountData},
+    account_type::{AccountData, DepositAccountData, WithdrawAccountData},
     account_service::{self, get_account}, account_model::Account,
-    transaction_service, transaction_model::Transaction,
 };
 
 
@@ -57,7 +56,8 @@ pub fn create_account(db: &State<Database>, account_data: Json<AccountData>,auth
             Ok(generic_response::<Option<String>>(
                 "Account created successfully",
                  None,
-                  Some(Status::Created.code)))
+                  Some(Status::Created.code))
+                )
         },
         Err(_) => Err(CustomError::BadRequest("Error occurred while creating an account".to_string())),
     }
@@ -67,34 +67,52 @@ pub fn create_account(db: &State<Database>, account_data: Json<AccountData>,auth
 
 
 
+// initialize_withdrawal
+pub async fn initialize_withdrawal(db: &State<Database>,withdraw_data: Json<WithdrawAccountData >,user_id:Option<ObjectId>)
+-> Result<CustomResult, CustomError>
+// -> Result<(), CustomError>
+{
+    let new_account = account_service::get_account(db,doc!{
+        "user_id":user_id,
+        "currency":withdraw_data.currency.clone(),
+       "channel":"INTERNAL",
+    }, None).unwrap();
+ println!("{:?}{}",user_id,withdraw_data.currency);
+    match new_account {
+        None=> Err(CustomError::BadRequest(format!("User has no account in {}", withdraw_data.currency))),
+        Some(user_account)=>{
+              if user_account.balance < withdraw_data.amount {
+                return Err(CustomError::BadRequest(format!("Account has insufficient funds." )));
+              }
+            let response = transaction_service::initialize_withdrawal(db,withdraw_data, user_account.id).await;
+            Ok(generic_response ("Deposit link successfully created.",Some(response.unwrap()),Some(Status::Created.code)))
 
+        }
+    }
+
+
+
+    
+    
+    
+    // Ok(())
+    
+}
 // deposit(db, account_data,auth_user)
-pub fn initialize_deposit(db: &State<Database>,deposit_data: Json<DepositAccountData>,auth_user:User)
--> Result<(), CustomError>
-// -> Result<CustomResult, CustomError>
+pub async fn initialize_deposit(db: &State<Database>,deposit_data: Json<DepositAccountData>,auth_user:User)
+-> Result<CustomResult, CustomError>
 {
     let new_account = account_service::get_account(db,doc!{
         "user_id":auth_user.id,
-        "currency":deposit_data.currency.clone(),
-       "channel":"INTERNAL",
+        "currency":&deposit_data.currency,
+        "channel":"INTERNAL",
     }, None).unwrap();
-    println!("{:?}",new_account);
 
     match new_account {
         None=> Err(CustomError::BadRequest(format!("User has no account in {}", deposit_data.currency))),
         Some(user_account)=>{
-            let provider_name = "".to_string();
-            let new_transaction= Transaction::new(
-                deposit_data.amount.clone(), 
-                deposit_data.currency.clone(),
-                0.0, 
-                user_account.id, 
-                provider_name);
-            let new_transactionv = transaction_service::create_transaction(db,new_transaction);
-            // let provider_name = get_provider_name();
-            Ok(())
-            
-
+           let response =  transaction_service::initialize_deposit(db,deposit_data, user_account.id, auth_user.email).await;
+    Ok(generic_response ("Deposit link successfully created.",Some(response.unwrap()),Some(Status::Created.code)))
         }
     }
 

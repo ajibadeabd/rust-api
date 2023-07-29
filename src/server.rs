@@ -11,7 +11,7 @@ use std::sync::Arc;
 use modules::{middleware,middleware_copy};
 use app::{
     user::user_route::{add_user,sign_in},
-    account::account_route::{ account_creation ,deposit}
+    account::account_route::{ account_creation ,deposit,withdraw}
     
 };
  
@@ -23,7 +23,7 @@ let db=database::Database::init();
     let rocket = rocket::build()
 
     .mount("/api", routes![add_user,sign_in]);
-    let rocket = rocket.mount("/api/account", routes![account_creation,deposit])
+    let rocket = rocket.mount("/api/account", routes![account_creation,deposit,withdraw])
     .manage(db);
 
      rocket
