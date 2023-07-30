@@ -1,9 +1,9 @@
-use mongodb::{results::InsertOneResult, bson::{oid::ObjectId, Document}, options::FindOneOptions};
-use rocket::{State, serde::json::Json, http::Status};
+use mongodb::{results::{InsertOneResult, UpdateResult}, bson::{ Document }, options::{FindOneOptions, UpdateModifications, UpdateOptions}, sync::ClientSession};
+use rocket::{State};
 
-use crate::{database::Database, modules::response_handler::CustomError, app::user::user_model::User};
+use crate::{database::Database, modules::response_handler::CustomError};
 
-use super::{account_type::AccountData, account_model::Account};
+use super::{account_model::Account};
 
 
 
@@ -29,3 +29,10 @@ pub fn get_account(db: &State<Database>,find_by:Document,filer_by:Option<FindOne
 {
     db.account().find_one(find_by,filer_by)
 }
+
+ 
+pub fn update_account_transaction(db: &State<Database>,filter_by:Document,update_doc:UpdateModifications,update_option:Option<UpdateOptions>,session:Option<&mut ClientSession>)-> Result<UpdateResult,mongodb::error::Error>{
+  db.account().update_one(filter_by,update_doc,update_option,session)
+}
+
+ 

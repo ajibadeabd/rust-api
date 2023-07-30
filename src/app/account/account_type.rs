@@ -13,14 +13,19 @@ pub struct DepositAccountData {
     pub currency:String,
     pub amount:f64
 }
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TransferPaymentData {
+    pub amount: f64,
+    pub currency: String,
+    pub receiver_id: String,
+}
 
 #[derive(Debug, Clone,  Serialize,  Deserialize)]
 pub struct WithdrawAccountData {
     pub currency:String,
     pub amount:f64,
-    pub bank_account_number:i64,
-    pub bank_account_name:String,
-    pub bank_code:i32
+    pub bank_account_number:String,
+    pub bank_code:String
 }
 
 #[derive(Debug, Clone,  Serialize,  Deserialize)]
@@ -47,4 +52,13 @@ pub enum TransactionType {
 pub enum SupportedCurrency {
     #[serde(rename = "NGN")]
     NGN,
+}
+
+
+
+#[derive(Debug,Deserialize,Serialize)]
+pub struct TransactionsQueryData {
+   pub transaction_id: Option<String>,
+   pub account_id:Option<String>,
+   pub currency: Option<String>,
 }

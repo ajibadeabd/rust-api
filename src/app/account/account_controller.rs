@@ -6,19 +6,16 @@ use crate::{
     database::Database, modules::{
         response_handler::{
             CustomError, CustomResult, generic_response
-        }, provider::payment::paystack::TransactionDTO
+        }
     }, 
     app::{user::{
         user_model::User, user_service::update_user_account
     }, account::transaction_service
-},
-modules::{
-    generic_type::{ResponseType, GenericResponse},
 }
 };
 
 use super::{
-    account_type::{AccountData, DepositAccountData, WithdrawAccountData},
+    account_type::{AccountData, DepositAccountData, WithdrawAccountData, TransferPaymentData, TransactionsQueryData},
     account_service::{self, get_account}, account_model::Account,
 };
 
@@ -70,35 +67,25 @@ pub fn create_account(db: &State<Database>, account_data: Json<AccountData>,auth
 // initialize_withdrawal
 pub async fn initialize_withdrawal(db: &State<Database>,withdraw_data: Json<WithdrawAccountData >,user_id:Option<ObjectId>)
 -> Result<CustomResult, CustomError>
-// -> Result<(), CustomError>
 {
     let new_account = account_service::get_account(db,doc!{
         "user_id":user_id,
         "currency":withdraw_data.currency.clone(),
        "channel":"INTERNAL",
     }, None).unwrap();
- println!("{:?}{}",user_id,withdraw_data.currency);
     match new_account {
         None=> Err(CustomError::BadRequest(format!("User has no account in {}", withdraw_data.currency))),
         Some(user_account)=>{
               if user_account.balance < withdraw_data.amount {
                 return Err(CustomError::BadRequest(format!("Account has insufficient funds." )));
               }
-            let response = transaction_service::initialize_withdrawal(db,withdraw_data, user_account.id).await;
-            Ok(generic_response ("Deposit link successfully created.",Some(response.unwrap()),Some(Status::Created.code)))
+            let transfer_response = transaction_service::initialize_withdrawal(db,withdraw_data, user_account.id).await?;
+            
+            Ok(generic_response ("Withdraw transaction successfully initiated.",Some(transfer_response),Some(Status::Created.code)))
 
         }
     }
-
-
-
-    
-    
-    
-    // Ok(())
-    
 }
-// deposit(db, account_data,auth_user)
 pub async fn initialize_deposit(db: &State<Database>,deposit_data: Json<DepositAccountData>,auth_user:User)
 -> Result<CustomResult, CustomError>
 {
@@ -115,5 +102,21 @@ pub async fn initialize_deposit(db: &State<Database>,deposit_data: Json<DepositA
     Ok(generic_response ("Deposit link successfully created.",Some(response.unwrap()),Some(Status::Created.code)))
         }
     }
+}
 
+pub async fn transfer_funds(db: &State<Database>,transfer_data: Json<TransferPaymentData >,auth_user:User)
+-> Result<CustomResult, CustomError>
+{
+     let response = transaction_service::transfer_fund(db,transfer_data,auth_user
+).await?;
+    Ok(generic_response ("Transfer transaction successfully done.",Some(response),Some(Status::Created.code)))
+}
+
+
+pub async fn transactions(db: &State<Database>,transaction_data: TransactionsQueryData,auth_user:User)
+-> Result<CustomResult, CustomError>
+{
+     let response = transaction_service::transactions(db,transaction_data,auth_user
+).await?;
+    Ok(generic_response ("Transfer transaction successfully done.",Some(response),Some(Status::Created.code)))
 }

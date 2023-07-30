@@ -28,7 +28,7 @@ pub fn sign_up(db: &State<Database>,mut user:Json<User>)
         Ok(res) => Ok({
             let  new_account_data = Account::new(
                 "INTERNAL".to_string(),
-                "NG".to_string(),
+                "NGN".to_string(),
                 res.inserted_id.as_object_id() 
             );
             let user_account = create_new_account(db,new_account_data);

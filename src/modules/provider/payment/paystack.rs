@@ -67,7 +67,7 @@ pub struct TransactionDTO {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TransferPAymentPayload {
-    // #[serde(rename = "type")]
+    #[serde(rename = "type")]
     pub account_type: String,
     pub name: String,
     pub account_number: String,
@@ -97,6 +97,36 @@ pub struct InitializeTransactionDTO {
 }
 
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RecipientDetails {
+    pub active: bool,
+    #[serde(rename = "createdAt")]
+    pub created_at: String,
+    pub currency: String,
+    pub description: Option<String>,
+    pub domain: String,
+    pub email: Option<String>,
+    pub id: u64,
+    pub integration: u64,
+    pub metadata: Option<String>,
+    pub name: String,
+    pub recipient_code: String,
+    pub r#type: String,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+    pub is_deleted: bool,
+    pub details: RecipientAccountDetails,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RecipientAccountDetails {
+    pub authorization_code: Option<String>,
+    pub account_number: String,
+    pub account_name: String,
+    pub bank_code: String,
+    pub bank_name: String,
+}
+
 
 // Implement Into<reqwest::Body> for &InitializeTransactionDTO
 impl Into<Body> for &InitializeTransactionDTO {
@@ -123,62 +153,24 @@ fn create_authorization_header() -> HeaderMap {
     );
     headers
 }
-
-// pub async fn initialize_transaction(dto: TransactionDTO) -> Result<CheckoutResponse, Box<dyn std::error::Error>> {
-//     println!("frfrf {:?}",dto.transactionReference);
-//     let payload = InitializeTransactionDTO  {
-//         reference: dto.transactionReference,
-//         email: dto.userEmail,
-//         amount: (dto.amount * 100.0) ,
-//         currency: dto.currency,
-//         callback_url: dto.callbackUrl,
-//         channels: Vec::from([
-//             "card".to_owned(), 
-//             "bank".to_owned(), 
-//             "ussd".to_owned(), 
-//             "mobile_money".to_owned(), 
-//             "bank_transfer".to_owned(), 
-//             ]),
-//         metadata: HashMap::new()
-//     };
-
-
-//     let client = Client::new();
-//     let res = client.post("https://api.paystack.co/transaction/initialize")
-//         .headers(create_authorization_header())
-//         // .json(&payload)
-//         .body(&payload)
-//         .send()
-//         .await?;
-
-//     // let res_data: HashMap<String, serde_json::Value> = res.
-//     let res_data = res.text().await;
-//     println!("{:?}",res_data);
-//     // if let Some(status) = res_data.get("status").and_then(|s| s.as_bool()) {
-//         // if res.status() {
-//         //     return Err("Unable to initialize transaction".into());
-//         // }
-//     // }
-
-//     // let data = res_data.get("data").ok_or("Missing data field")?;
-//     // let reference = data.get("reference").ok_or("Missing reference field")?.as_str().ok_or("Invalid reference field")?.to_string();
-//     // let authorization_url = data.get("authorization_url").ok_or("Missing authorization_url field")?.as_str().ok_or("Invalid authorization_url field")?.to_string();
-
-//     Ok(CheckoutResponse {
-//         transactionReference: "reference".to_string(),
-//         checkoutUrl: "authorization_url".to_string(),
-//     })
-// }
+ 
+ 
 #[derive(Debug,Clone)]
 pub struct PaystackApi ;
-
-#[derive(Debug, Serialize,Deserialize,Clone)]
-pub struct ResponseData {
+ 
+#[derive(Debug, Serialize, Deserialize,Clone)]
+pub struct ResponseData<T> {
     status: bool,
     message: String,
-    data: ResponseDataDetails,
+    data: Option<T>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct ResponseTransferData {
+    account_number: String,
+    account_name: String,
+    bank_id: u32,
+}
 #[derive(Debug, Serialize,Deserialize,Clone)]
 pub struct ResponseDataDetails {
     authorization_url: String,
@@ -223,16 +215,18 @@ impl PaystackApi {
             return Err(CustomError::BadRequest("Unable to process transaction".to_string()));
     } else{
         let response  = response_data.text().await.unwrap();
-        let initialize_response:ResponseData = from_str(&response).unwrap();
+        let initialize_response:ResponseData::<ResponseDataDetails> = from_str(&response).unwrap();
+        let initialize_response_data = initialize_response.data.unwrap();
+
         let response  = DepositResponseDataDetails{
-            transaction_reference:initialize_response.data.reference,
-            checkout_url:initialize_response.data.authorization_url
+            transaction_reference:initialize_response_data.reference,
+            checkout_url:initialize_response_data.authorization_url
         };
          Ok(response)
     }
     }
     pub async fn initialize_transfer(&self, payload: TransferPAymentPayload) 
--> Result<(), CustomError> {
+-> Result<RecipientDetails, CustomError> {
    
 
     let client = Client::new();
@@ -243,40 +237,39 @@ impl PaystackApi {
         .await.unwrap();
     
     if response_data.status().is_success()==false {
-        return Err(CustomError::BadRequest("Unable to process transaction".to_string()));
+        let response  = response_data.text().await.unwrap();
+        let initialize_response:ResponseData<String> = from_str(&response).unwrap();
+            return Err(CustomError::BadRequest(initialize_response.message));
+    // let response  = response_data.text().await.unwrap();
+    //     return Err(CustomError::BadRequest("Unable to process transaction".to_string()));
 } else{
     let response  = response_data.text().await.unwrap();
-    let initialize_response:ResponseData = from_str(&response).unwrap();
-    let response  = DepositResponseDataDetails{
-        transaction_reference:initialize_response.data.reference,
-        checkout_url:initialize_response.data.authorization_url
-    };
-    println!("{:?}",response);
-     Ok(())
-    //  Ok(response)
+    let initialize_transfer_response: ResponseData::<RecipientDetails>  = from_str(&response).unwrap();
+     Ok(initialize_transfer_response.data.unwrap())
 }
 
 }
-}
-
  
 
-// async fn get_account_name(account_number: &str, bank_code: &str) -> Result<String, Box<dyn std::error::Error>> {
-//     let url = format!("https://api.paystack.co/bank/resolve?account_number={}&bank_code={}", account_number, bank_code);
-//     let client = Client::new();
-//     let res = client.get(&url)
-//         .headers(create_authorization_header())
-//         .send()
-//         .await?;
+pub async fn get_account_name(&self,account_number: &str, bank_code: &str) -> Result<String, CustomError> {
+    let url = format!("https://api.paystack.co/bank/resolve?account_number={}&bank_code={}", account_number, bank_code);
+    let client = Client::new();
+    let response_data = client.get(&url)
+        .headers(create_authorization_header())
+        .send()
+        .await.unwrap(); 
+    if response_data.status().is_success()==false {
+        let response  = response_data.text().await.unwrap();
+        let initialize_response:ResponseData::<String> = from_str(&response).unwrap();
+            return Err(CustomError::BadRequest(initialize_response.message));
+    } else{
+        let response  = response_data.text().await.unwrap();
 
-//     let res_data: HashMap<String, serde_json::Value> = res.json().await?;
-//     let account_name = res_data.get("data")
-//         .and_then(|data| data.get("account_name"))
-//         .and_then(|account_name| account_name.as_str())
-//         .unwrap_or("");
-
-//     Ok(account_name.to_string())
-// }
+        let initialize_response:ResponseData::<ResponseTransferData > = from_str(&response).unwrap();
+         Ok(initialize_response.data.unwrap().account_name)
+    }
+}
+}
 
 // fn verify_webhook_payload(signature: &str, payload: &serde_json::Value) -> Option<PaymentEvent> {
 //     let payload_string = payload.to_string();

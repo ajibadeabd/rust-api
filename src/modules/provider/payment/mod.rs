@@ -64,8 +64,6 @@ pub   fn new() -> Self {
             supported_currencies: vec![
                 SupportedCurrency {
                     code: "NGN".to_string(),
-
-                    
                     amount: AmountRange { min: 100.00, max: 3_000_000.00 },
                 },
             ],
@@ -77,12 +75,12 @@ pub   fn new() -> Self {
         Self { providers }
     }
 
-pub  fn get_provider_name(&self, amount: f64, currency: &str) -> Option<String> {
+pub  fn get_provider_name(&self, amount: &f64, currency: &str) -> Option<String> {
         for (provider_name, config) in &self.providers {
             for supported_currency in &config.supported_currencies {
                 if supported_currency.code == currency
-                    && amount >= supported_currency.amount.min
-                    && amount <= supported_currency.amount.max
+                    && amount >= &supported_currency.amount.min
+                    && amount <= &supported_currency.amount.max
                 {
                     return Some(provider_name.clone());
                 }
@@ -90,14 +88,16 @@ pub  fn get_provider_name(&self, amount: f64, currency: &str) -> Option<String> 
         }
         None
     }
-pub fn get_provider_instance(&self, provider_name: Option<&str>)->Option<PaystackApi>
- {
-        match provider_name.unwrap_or(DEFAULT_PROVIDER) {
-            "paystack" => Some(self.providers.get("paystack")?.module.clone()),
-            _ => None,
-        }
+    pub fn get_provider_instance(&self, provider_name: Option<&str>)->Option<PaystackApi>
+     {
+            match provider_name.unwrap_or(DEFAULT_PROVIDER) {
+                "paystack" => Some(self.providers.get("paystack")?.module.clone()),
+                _ => None,
+            }
     }
 
+     
+       
 //    
 }
 
