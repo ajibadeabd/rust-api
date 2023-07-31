@@ -6,19 +6,19 @@ use mongodb::{
 };
 use serde::{Serialize, Deserialize};
 
-use crate::app::user::user_model::serialize_object_ids;
+use crate::app::user::user_model::{serialize_object_ids, serialize_object_id};
 
 #[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct Account {
-        #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+        #[serde(rename = "_id", skip_serializing_if = "Option::is_none",serialize_with = "serialize_object_id")]
         pub id: Option<ObjectId>,
         pub balance: f64,
         pub locked_balance: f64,
         pub user_id: Option<ObjectId>,
         pub channel: String,
         pub currency: String,
-        #[serde(serialize_with = "serialize_object_ids")]
-        pub transaction: Option<Vec<ObjectId>>,
+        #[serde(skip_serializing_if = "Option::is_none",serialize_with = "serialize_object_ids")]
+        pub transactions: Option<Vec<ObjectId>>,
         pub updated_at: Option<DateTime<Utc>>,
         pub created_at: Option<DateTime<Utc>>,
 }
@@ -30,7 +30,7 @@ impl Account {
             currency,
             channel,
             user_id,
-            transaction: None,
+            transactions: None,
             id:None,
             created_at: Some(Utc::now()),
             updated_at: Some(Utc::now()),
@@ -56,6 +56,17 @@ impl<'a> Init<'a> {
     }
     pub fn find_by_id(&self, object_id: &ObjectId)->Result<std::option::Option<Account>, mongodb::error::Error> {
         self.col.find_one(doc!{"_id":object_id}, None)
+    }
+    pub fn find(&self, find_by:Option<Document>)
+    -> Result<Vec<Account>, mongodb::error::Error> {
+     
+    let cursors = self
+    .col
+    .find(find_by, None)
+    .ok()
+    .expect("Error getting list of Transactions");
+    Ok(cursors.map(|doc| doc.unwrap()).collect())
+   
     }
     pub fn update_one(&self, filter_by:Document,update:UpdateModifications,update_option:Option<UpdateOptions>,session: Option<&mut ClientSession>)->Result<UpdateResult, mongodb::error::Error> {
         if let Some(session) = session {

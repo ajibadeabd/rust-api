@@ -79,7 +79,6 @@ pub async fn lock_amount(db: &State<Database>,user_account_id:  &ObjectId, amoun
        let new_tran =  db.account().update_one(doc!{
         "_id":user_account_id,
         }, update_doc, None,  session);
-     println!("{:?}",new_tran);
 
 }
 
@@ -92,7 +91,6 @@ pub async fn withdraw_fund(db: &State<Database>,user_account_id:  &ObjectId, amo
     let new_tran =  db.account().update_one(doc!{
      "_id":user_account_id,
      }, update_doc, None, session);
-     println!("{:?}",new_tran);
 
 
 }
@@ -258,8 +256,39 @@ pub fn transactions(
     db: &State<Database>,
     transaction_data:TransactionsQueryData,
     auth_user:User
-){
-db.transaction().find_all()
+)->Vec<Transaction>{
+     let user_accounts: Vec<String> = auth_user.accounts.unwrap().iter().map(|id| id.to_hex()).collect();
+
+    let mut filter_by = doc! {
+        "$or": [
+            {"receiver_id": {"$in": &user_accounts}},
+            {"giver_id": {"$in": &user_accounts}},
+        ]
+    };
+    if let Some(account_id) = &transaction_data.account_id {
+        filter_by = doc! {
+            "$or": [
+                {"receiver_id":  account_id.trim()},
+                {"giver_id":  account_id.trim() },
+            ]
+        };
+        }
+    
+    if let Some(currency) = &transaction_data.currency {
+        filter_by.insert("currency", currency);
+    }
+    if let Some(transaction_id ) = &transaction_data.transaction_id {
+        filter_by.insert("_id", ObjectId::parse_str(transaction_id.trim()).unwrap());
+    }
+    if let Some(limit) = &transaction_data.limit {
+        filter_by.insert("limit", limit);
+    }
+    if let Some(page) = &transaction_data.page {
+        filter_by.insert("page", page);
+    }
+    
+let transactions: Vec<Transaction> = db.transaction().find_all(Some(filter_by)).unwrap();
+  transactions
 }
 
 fn extract_object_id (object_id: &Bson)->ObjectId{

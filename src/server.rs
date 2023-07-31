@@ -8,7 +8,7 @@ mod database;
 
 use app::{
     user::user_route::{add_user,sign_in},
-    account::account_route::{ account_creation ,deposit,withdraw,transfer_funds}
+    account::account_route::{ account_creation ,deposit,withdraw,transfer_funds,transactions,accounts}
 };
  
 
@@ -19,7 +19,7 @@ let db=database::Database::init();
     let rocket = rocket::build()
 
     .mount("/api", routes![add_user,sign_in]);
-    let rocket = rocket.mount("/api/account", routes![account_creation,deposit,withdraw,transfer_funds])
+    let rocket = rocket.mount("/api/account", routes![account_creation,deposit,withdraw,transfer_funds,transactions,accounts])
     .manage(db);
 
      rocket

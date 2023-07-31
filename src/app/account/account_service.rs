@@ -1,4 +1,4 @@
-use mongodb::{results::{InsertOneResult, UpdateResult}, bson::{ Document }, options::{FindOneOptions, UpdateModifications, UpdateOptions}, sync::ClientSession};
+use mongodb::{results::{InsertOneResult, UpdateResult}, bson::{ Document, doc, oid::ObjectId }, options::{FindOneOptions, UpdateModifications, UpdateOptions}, sync::ClientSession};
 use rocket::{State};
 
 use crate::{database::Database, modules::response_handler::CustomError};
@@ -30,9 +30,19 @@ pub fn get_account(db: &State<Database>,find_by:Document,filer_by:Option<FindOne
     db.account().find_one(find_by,filer_by)
 }
 
+pub fn accounts(db: &State<Database>,currency:Option<String>,user_id:Option<ObjectId>)
+->  Vec<Account> 
+
+{
+    db.account().find(Some(doc!{ "user_id":user_id})).unwrap()
+}
+
  
 pub fn update_account_transaction(db: &State<Database>,filter_by:Document,update_doc:UpdateModifications,update_option:Option<UpdateOptions>,session:Option<&mut ClientSession>)-> Result<UpdateResult,mongodb::error::Error>{
   db.account().update_one(filter_by,update_doc,update_option,session)
 }
 
  
+
+// let transactions = account_service::accounts(db,currency,auth_user.id);
+// Ok(generic_response ("Transfer transaction successfully done.",Some(transactions),Some(Status::Created.code)))

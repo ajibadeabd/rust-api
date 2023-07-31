@@ -82,14 +82,20 @@ impl<'a> Init<'a> {
     pub fn find_one(&self, transaction: &str)->Result<std::option::Option<Transaction>, mongodb::error::Error> {
         self.col.find_one(doc! {"":transaction}, None)
     }
-    pub fn find_all(&self)->Result<std::option::Option<Transaction>, mongodb::error::Error> {
-        self.col.find(None, None).into_collection()
+    pub fn find_all(&self,filter_by:Option<Document>)
+    -> Result<Vec<Transaction>, mongodb::error::Error> {
+    let cursors = self
+    .col
+    .find(filter_by, None)
+    .ok()
+    .expect("Error getting list of Transactions");
+    Ok(cursors.map(|doc| doc.unwrap()).collect())
     }
+
     pub fn update_one(&self, filter_by:Document,update:UpdateModifications,update_option:Option<UpdateOptions>,session: Option<&mut ClientSession>)->Result<UpdateResult, mongodb::error::Error> {
            if let Some(session) = session {
             return  self.col.update_one_with_session(filter_by,update,update_option,session)
            }
-           println!("here");
             self.col.update_one(filter_by,update,update_option)
     }
 }

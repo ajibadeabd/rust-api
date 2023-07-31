@@ -116,7 +116,14 @@ pub async fn transfer_funds(db: &State<Database>,transfer_data: Json<TransferPay
 pub async fn transactions(db: &State<Database>,transaction_data: TransactionsQueryData,auth_user:User)
 -> Result<CustomResult, CustomError>
 {
-     let response = transaction_service::transactions(db,transaction_data,auth_user
-).await?;
-    Ok(generic_response ("Transfer transaction successfully done.",Some(response),Some(Status::Created.code)))
+     let transactions = transaction_service::transactions(db,transaction_data,auth_user);
+    Ok(generic_response ("Transfer transaction successfully done.",Some(transactions),Some(Status::Created.code)))
 }
+
+pub async fn accounts(db: &State<Database>,currency:Option<String>,auth_user:User)
+-> Result<CustomResult, CustomError>
+{
+     let transactions = account_service::accounts(db,currency,auth_user.id);
+    Ok(generic_response ("Transfer transaction successfully done.",Some(transactions),Some(Status::Created.code)))
+}
+ 

@@ -61,4 +61,6 @@ pub struct TransactionsQueryData {
    pub transaction_id: Option<String>,
    pub account_id:Option<String>,
    pub currency: Option<String>,
+   pub limit: Option<String>,
+   pub page: Option<String>,
 }

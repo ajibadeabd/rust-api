@@ -59,7 +59,6 @@ impl<'r> Responder<'r, 'static> for CustomError {
             message: self.to_string(),
             status: "failed".to_owned(),
         }).unwrap();
-println!("{:?}",self.get_http_status());
         Response::build()
             .status(self.get_http_status())
             .header(ContentType::JSON)
@@ -87,8 +86,6 @@ impl std::fmt::Display for CustomResult {
 
 impl<'r> Responder<'r, 'static> for CustomResult {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        // serialize struct into json string
-        println!("{:?}",&self.status_code);
         Response::build()
             .status(Status { code: self.status_code.unwrap()})
             .header(ContentType::JSON)

@@ -46,37 +46,42 @@ pub async fn transfer_funds(
        account_controller::transfer_funds(db, transfer_data , auth_user).await 
 }
 
-// #[post("/transactions", data = "<transfer_data>")]
-// pub async fn transactions(
-//     db: &State<Database>,
-//     transfer_data: Json<TransferPaymentData>,
-//      auth_user: User
-//     )-> Result<CustomResult, CustomError> {
-//        account_controller::transfer_funds(db, transfer_data , auth_user).await 
-// }
-
-
-// transactionId?: string;
-//   accountId?: string;
-//   currency?: string;
-
-
+ 
 // Route handler for /transactions (matches all POST requests to /transactions with query parameters)
-#[post("/transactions?<currency>&<transaction_id>&<account_id>")]
+#[get("/transactions?<currency>&<transaction_id>&<account_id>&<limit>&<page>")]
 pub async fn transactions(
     db: &State<Database>,
-    currency:String,
-    transaction_id:String,
-    account_id:String,
+    currency:Option<String>,
+    transaction_id:Option<String>,
+    account_id:Option<String>,
+    page:Option<String>,
+    limit:Option<String>,
     auth_user: User,
 ) -> Result<CustomResult, CustomError> {
     account_controller::transactions(
         db,
         TransactionsQueryData {
-            currency:Some(currency) ,
-            transaction_id:Some(transaction_id),
-            account_id:Some(account_id),
+            currency ,
+            transaction_id ,
+            account_id ,
+            page ,
+           limit ,
         },
+        auth_user
+    ).await
+} 
+
+
+// Route handler for /transactions (matches all POST requests to /transactions with query parameters)
+#[get("/all?<currency>")]
+pub async fn accounts(
+    db: &State<Database>,
+    currency:Option<String>,
+    auth_user: User,
+) -> Result<CustomResult, CustomError> {
+    account_controller::accounts(
+        db,
+        currency,
         auth_user
     ).await
 } 
