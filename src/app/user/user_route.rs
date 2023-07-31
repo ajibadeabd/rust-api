@@ -1,12 +1,11 @@
 
-use rocket::{http::Status, serde::json::Json,State, figment::value::Value};
+use rocket::{serde::json::Json,State};
 use crate::{
     database::{
         Database
-    }, app::user::types::LoginResponse ,
-    modules::{generic_type::ResponseType,  response_handler::{ CustomError, CustomResult}}
+    },
+    modules::{ response_handler::{ CustomError, CustomResult}}
 };
-use rocket::request::{Request};
 use super::{
     user_model::User,
     user_controller,
@@ -30,8 +29,4 @@ pub fn sign_in(
 )-> Result<CustomResult, CustomError>{
      user_controller::sign_in(db,user)
 }
-
-// #[get("/")]
-// pub fn get_all_user(db: &State<Database>)-> Result<CustomResult, CustomError>{
-//      user_controller::get_all_user(db)
-// }
+ 

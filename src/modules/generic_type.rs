@@ -10,5 +10,4 @@ pub struct GenericResponse<T> {
     pub message: String,
     pub data: T,
 }
-pub type ResponseType<T> = Result<Json<GenericResponse<T>>,CustomError>;
 

@@ -7,7 +7,6 @@ use crate::{
         Database
     },
     modules::{
-        generic_type::{ResponseType, GenericResponse},
         util::{self, encode_token_and_refresh}, response_handler::{CustomError, CustomResult, generic_response}
     }, app::account::{account_service::create_new_account, account_model::Account
         }
@@ -34,13 +33,9 @@ pub fn sign_up(db: &State<Database>,mut user:Json<User>)
             let user_account = create_new_account(db,new_account_data);
                 if let Ok(account) = user_account {
             let update_doc = UpdateModifications::Document( doc! { "$set": { "accounts": [account.inserted_id] }  });
-           let s = update_user_account(db,doc!{"_id": res.inserted_id.as_object_id() },update_doc,None);
+           let _ = update_user_account(db,doc!{"_id": res.inserted_id.as_object_id() },update_doc,None);
                 }
-            let response_json: GenericResponse<Option<String>> = GenericResponse {
-              status: "success".to_string(),
-              message: user.email.to_string() + " account created",
-              data:None
-          };
+            
           generic_response::<Option<String>>(
             "has successfully logged in.",
            None,
@@ -84,20 +79,5 @@ pub fn sign_in(db: &State<Database>,user:Json<UserLoginRequestType>)
 
     }
     
-}
-// pub fn get_all_user(db: &State<Database>)
-// -> Result<CustomResult, CustomError>
-
-// {
-
-//     let all_user = user_service::get_all_user(db).unwrap();
-     
-        
-//          Ok(generic_response::<mongodb::sync::Cursor<User>>(
-//              "users fetched successfully.",
-//             Some(all_user ),
-//             None
-//         )) 
-    
-// }
+} 
  
