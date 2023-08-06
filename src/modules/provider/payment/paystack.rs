@@ -1,6 +1,6 @@
 use hmac::{Hmac, Mac};
 use rocket::futures::future::ok;
-use rocket::serde::json;
+use rocket::serde::json::{self, Json};
 use sha2::Sha512;
 use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::{Client, Body};
@@ -9,7 +9,9 @@ use std::{collections::HashMap,env};
 use log::error;
 use dotenv::dotenv;
 use serde_json::from_str;
+use hex_literal::hex;
 
+use crate::app::account::account_type::{PaymentEventRequestBody, TransactionType};
 use crate::modules::response_handler::CustomError;
 
 // use rocket::{serde::json::Json};
@@ -41,20 +43,15 @@ struct TransferResponse {
     transactionReference: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,PartialEq)]
 pub struct PaymentEvent {
-    status: bool,
+    pub  status: bool,
     #[serde(rename = "type")]
-    transactionType: TransactionType,
-    transactionId: String,
-    providerReference: String,
+    pub transaction_type: TransactionType,
+    pub transaction_id: String,
+    pub provider_reference: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-enum TransactionType {
-    DEPOSIT,
-    WITHDRAWAL,
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TransactionDTO {
@@ -269,52 +266,67 @@ pub async fn get_account_name(&self,account_number: &str, bank_code: &str) -> Re
          Ok(initialize_response.data.unwrap().account_name)
     }
 }
+
+
+pub fn verify_webhook_payload(&self, signature: &str, payload: &Json<PaymentEventRequestBody>) -> Option<PaymentEvent> {
+    let payload_string = serde_json::to_string(&payload.0).unwrap();
+
+
+    // Create a new HMAC instance with the secret key
+    let mut mac = Hmac::<Sha512>::new_from_slice(b"my secret and secure key")
+        .expect("HMAC can take a key of any size");
+
+    // Update the HMAC with the payload string
+    // println!("{:?}",expected);
+
+    mac.update(b"payload_string");
+
+    // Get the resulting HMAC digest
+    // let result = mac.finalize().into_bytes();
+    // println!("{:?}",result);
+    // let hash = hex!(result);
+    let expected = hex!("97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9");
+    println!("{:?}",expected);
+
+    // Get the signature from the payload (assuming it's already present)
+    let signature = "<replace with the actual signature>";
+    if false {
+        return None
+    }
+
+    let event_type =payload.event.as_str();
+    let data =&payload.data;
+
+    let event = match event_type {
+        "charge.success" => PaymentEvent {
+            status: true,
+            transaction_type: TransactionType::DEPOSIT,
+            transaction_id:data.reference.clone(),
+            provider_reference: data.id.to_string(),
+        },
+        "charge.failed" => PaymentEvent {
+            status: false,
+            transaction_type: TransactionType::DEPOSIT,
+            transaction_id:data.reference.clone(),
+            provider_reference: data.id.to_string(),
+              },
+        "transfer.success" => PaymentEvent {
+            status: true,
+            transaction_type:TransactionType::WITHDRAWAL,
+            transaction_id:data.reference.clone(),
+            provider_reference: data.id.to_string(),
+        },
+        "transfer.failed" | "transfer.reversed" => PaymentEvent {
+            status: false,
+            transaction_type:TransactionType::WITHDRAWAL,
+            transaction_id:data.reference.clone(),
+            provider_reference: data.id.to_string(),
+         },
+        _ => {
+            return None;
+        }
+    };
+
+    Some(event)
+  }
 }
-
-// fn verify_webhook_payload(signature: &str, payload: &serde_json::Value) -> Option<PaymentEvent> {
-//     let payload_string = payload.to_string();
-//     let mut mac = Hmac::<Sha512>::new_varkey(SECRET_KEY.as_bytes()).unwrap();
-//     mac.update(payload_string.as_bytes());
-//     let hash = mac.finalize().into_bytes();
-//     let hash_string = "hex::encode(hash)";
-
-//     if signature != hash_string {
-//         return None;
-//     }
-
-//     let event_type = payload.get("event").and_then(|event| event.as_str()).unwrap_or("");
-//     let data = payload.get("data").unwrap_or(&serde_json::Value::Null);
-
-//     let event = match event_type {
-//         "charge.success" => PaymentEvent {
-//             status: true,
-//             transactionType: TransactionType::DEPOSIT,
-//             transactionId: data.get("reference").and_then(|reference| reference.as_str()).unwrap_or("").to_string(),
-//             providerReference: data.get("id").and_then(|id| id.as_str()).unwrap_or("").to_string(),
-//         },
-//         "charge.failed" => PaymentEvent {
-//             status: false,
-//             transactionType: TransactionType::DEPOSIT,
-//             transactionId: data.get("reference").and_then(|reference| reference.as_str()).unwrap_or("").to_string(),
-//             providerReference: data.get("id").and_then(|id| id.as_str()).unwrap_or("").to_string(),
-//         },
-//         "transfer.success" => PaymentEvent {
-//             status: true,
-//             transactionType: TransactionType::WITHDRAWAL,
-//             transactionId: data.get("reference").and_then(|reference| reference.as_str()).unwrap_or("").to_string(),
-//             providerReference: data.get("id").and_then(|id| id.as_str()).unwrap_or("").to_string(),
-//         },
-//         "transfer.failed" | "transfer.reversed" => PaymentEvent {
-//             status: false,
-//             transactionType: TransactionType::WITHDRAWAL,
-//             transactionId: data.get("reference").and_then(|reference| reference.as_str()).unwrap_or("").to_string(),
-//             providerReference: data.get("id").and_then(|id| id.as_str()).unwrap_or("").to_string(),
-//         },
-//         _ => {
-//             Err(format!("Unhandled event type: {}", event_type).as_str());
-//             return None;
-//         }
-//     };
-
-//     Some(event)
-// }
