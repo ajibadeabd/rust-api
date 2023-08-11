@@ -6,7 +6,7 @@ use crate::{
     database::Database, modules::{
         response_handler::{
             CustomError, CustomResult, generic_response
-        }
+        }, middleware::XStoreKeyHeader
     }, 
     app::{user::{
         user_model::User, user_service::update_user_account
@@ -15,7 +15,7 @@ use crate::{
 };
 
 use super::{
-    account_type::{AccountData, DepositAccountData, WithdrawAccountData, TransferPaymentData, TransactionsQueryData},
+    account_type::{AccountData, DepositAccountData, WithdrawAccountData, TransferPaymentData, TransactionsQueryData, PaymentEventRequestBody},
     account_service::{self, get_account}, account_model::Account,
 };
 
@@ -127,3 +127,18 @@ pub async fn accounts(db: &State<Database>,currency:Option<String>,auth_user:Use
     Ok(generic_response ("Transfer transaction successfully done.",Some(transactions),Some(Status::Created.code)))
 }
  
+
+
+
+pub async fn webhook(
+    db: &State<Database>,
+    x_paystack_signature: String,
+    provider: String,
+    payload:Json<PaymentEventRequestBody>,
+) -> Result<(), CustomError> {
+ 
+    let transactions = account_service::webhook(db,x_paystack_signature,provider,    payload);
+    // Ok(generic_response ("Transfer transaction successfully done.",Some(transactions),Some(Status::Created.code)))
+
+    Ok(())
+} 

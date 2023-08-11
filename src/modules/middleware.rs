@@ -44,4 +44,27 @@ impl<'r> FromRequest<'r> for User {
         }
     }
 }
+#[derive(Debug )]
+
+pub struct XStoreKeyHeader{
+    pub token:String
+}
+
+// Implement FromRequest for the newtype
+#[rocket::async_trait]
+
+impl<'r> FromRequest<'r> for XStoreKeyHeader {
+    type Error = ();
+
+   async  fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+    let header = request.headers().get_one("x-paystack-signature").unwrap_or("");
+    if header==""{
+        Outcome::Failure((Status::Unauthorized,()))
+    }else{
+            Outcome::Success(XStoreKeyHeader{token:header.to_string()} )
+         }
+   }
+}
+
+
   

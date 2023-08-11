@@ -1,11 +1,22 @@
+use std::any::Any;
+
 use mongodb::{results::{InsertOneResult, UpdateResult}, bson::{ Document, doc, oid::ObjectId }, options::{FindOneOptions, UpdateModifications, UpdateOptions}, sync::ClientSession};
-use rocket::{State};
+use rocket::{State, serde::json::Json};
+use serde_json::Value;
 
-use crate::{database::Database, modules::response_handler::CustomError};
+use crate::{database::Database, modules::{response_handler::CustomError, provider::payment::{PaymentProviderHashMap, paystack::PaymentEvent}}, app::account::transaction_service};
 
-use super::{account_model::Account};
+use super::{account_model::Account, account_type::{PaymentEventRequestBody, TransactionType}, transaction_model::Transaction};
 
 
+// use hmac::{Hmac, NewMac};
+// use sha2::Sha512;
+
+
+
+use sha2::{Sha256, Sha512};
+use hmac::{Hmac, Mac};
+use hex_literal::hex;
 
 
 
@@ -42,6 +53,74 @@ pub fn update_account_transaction(db: &State<Database>,filter_by:Document,update
   db.account().update_one(filter_by,update_doc,update_option,session)
 }
 
+ 
+pub fn webhook(db: &State<Database>,signature:String,provider_name:String,payload:Json<PaymentEventRequestBody>)
+// -> Result<(),Value>
+// -> Option<String>
+// ->(bool, Option<String>)
+->Option<bool> 
+{
+    let provider = PaymentProviderHashMap::new();
+   let provider_instance =  provider.get_provider_instance(Some(provider_name.as_str())).unwrap();
+    // println!("{:?}",payload);
+    // if verify_hash_key(&payload) {
+    //     return Err(CustomError::BadRequest("wrong signature".to_string()));
+    // }
+   let eventData: PaymentEvent =  provider_instance.verify_webhook_payload(&signature, &payload).unwrap();
+     let transaction = get_transaction_by_reference (db,&eventData);
+    //  if  transaction.is_none() {
+    //     // return None;
+    //     return Err(CustomError::BadRequest("Transaction record not found".to_string()));
+    //  }
+     match transaction {
+        None=>{
+            println!("Transaction record not found");
+        return None;
+        },
+        Some(transaction)=>{
+            if &eventData.transaction_type != &transaction.transaction_type {
+                println!("Unmatched transaction record with event in  transaction-type{:?} of event-type {:?}",transaction.transaction_type,eventData.transaction_type);
+                return None;
+            }
+            if eventData.transaction_type ==TransactionType::DEPOSIT{
+                
+            }else if eventData.transaction_type ==TransactionType::WITHDRAWAL {
+
+            }
+
+        }
+     }
+     return Some(true)
+  
+
+    // println!("here {:?}",eventData);
+    // Ok(())
+    // Ok(None)
+
+    // db.account().update_one(filter_by,update_doc,update_option,session)
+}
+
+fn get_transaction_by_reference (db: &State<Database>,eventData:&PaymentEvent)->Option<Transaction>{
+    let find_by = doc!{
+        "provider_reference": eventData.provider_reference.to_string(),
+        "_id": eventData.transaction_id.to_string(),
+    };
+   transaction_service::get_transaction(db, find_by)
+
+}
+  
+// pub fn verify_hash_key(payload:&Json<PaymentEventRequestBody>){
+
+// type HmacSha256 = Hmac<Sha256>;
+// let payload_string = serde_json::to_string(&payload).unwrap();
+
+//     let mut mac = HmacSha256::new_from_slice(b"my secret and secure key")
+//     .expect("HMAC can take key of any size");
+//     mac.update(b"payload_string");
+// }
+ 
+
+// let transactions = account_service::webhook(x_paystack_signature,provider);
  
 
 // let transactions = account_service::accounts(db,currency,auth_user.id);

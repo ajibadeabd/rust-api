@@ -187,6 +187,7 @@ pub async  fn initialize_withdrawal(db: &State<Database>,withdraw_data:Json<With
 pub async fn transfer_fund(db: &State<Database>,transfer_data:Json<TransferPaymentData>,auth_user:User)
 -> Result< Transaction,CustomError>
 {
+    println!("{:?}",transfer_data);
     let user_account  = get_account(db,doc!{
         "user_id":auth_user.id,
         "currency":&transfer_data.currency
@@ -252,7 +253,14 @@ pub async fn transfer_fund(db: &State<Database>,transfer_data:Json<TransferPayme
 
 
 
-pub fn transactions(
+pub fn get_transaction(
+    db: &State<Database>,
+    filter_by:Document
+)-> Option<Transaction> {
+    db.transaction().find_one(filter_by).unwrap()
+}
+
+    pub fn transactions(
     db: &State<Database>,
     transaction_data:TransactionsQueryData,
     auth_user:User

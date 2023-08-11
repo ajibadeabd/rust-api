@@ -10,7 +10,7 @@ use serde::{Serialize, Deserialize};
 use crate::app::user::user_model::serialize_object_id;
 
 use super::account_type::{TransactionStatus, TransactionType};
-#[derive(Debug, Serialize, Deserialize,Clone)]
+#[derive(Debug, Serialize, Deserialize,Clone,PartialEq)]
 pub struct Transaction {
         #[serde(
             rename = "_id", skip_serializing_if = "Option::is_none", serialize_with = "serialize_object_id"
@@ -79,8 +79,8 @@ impl<'a> Init<'a> {
        }
       self.col.insert_one(transaction, None)
     }
-    pub fn find_one(&self, transaction: &str)->Result<std::option::Option<Transaction>, mongodb::error::Error> {
-        self.col.find_one(doc! {"":transaction}, None)
+    pub fn find_one(&self, filter_by:Document)->Result<std::option::Option<Transaction>, mongodb::error::Error> {
+        self.col.find_one(filter_by, None)
     }
     pub fn find_all(&self,filter_by:Option<Document>)
     -> Result<Vec<Transaction>, mongodb::error::Error> {

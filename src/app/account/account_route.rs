@@ -1,13 +1,15 @@
 
-use rocket::{ serde::json::Json,State, http::uri::Query };
+use rocket::{ Request,serde::json::Json,State, http::{uri::Query, Header, Status}, request::FromRequest,  };
 use serde::{Deserialize, Serialize};
 
-use crate::{ modules::{ response_handler::{ CustomError, CustomResult }
-}, database::Database, app::{user::user_model::User, account::account_type::{DepositAccountData, WithdrawAccountData, TransferPaymentData}}};
+use crate::{ modules::{ response_handler::{ CustomError, CustomResult }, middleware::XStoreKeyHeader, provider::payment::paystack::PaymentEvent
+}, database::Database, app::{user::user_model::User, account::account_type::{DepositAccountData, WithdrawAccountData, TransferPaymentData, PaymentEventRequestBody}}};
 use super::{
     account_type::{AccountData, TransactionsQueryData},
     account_controller
 };
+use rocket::request::{Outcome} ;
+
 
 use std::collections::HashMap;
  
@@ -70,18 +72,15 @@ pub async fn transactions(
         auth_user
     ).await
 } 
-
-
 // Route handler for /transactions (matches all POST requests to /transactions with query parameters)
-#[get("/all?<currency>")]
-pub async fn accounts(
+#[post("/callback/<provider>" , data = "<payload>") ]
+pub async fn webhook(
     db: &State<Database>,
-    currency:Option<String>,
-    auth_user: User,
-) -> Result<CustomResult, CustomError> {
-    account_controller::accounts(
-        db,
-        currency,
-        auth_user
-    ).await
+    x_paystack_signature: XStoreKeyHeader, 
+    provider:String,
+    payload:Json<PaymentEventRequestBody>
+) -> Result<(), CustomError> {
+    println!(" jknjk{:?}   nn   {:?}",x_paystack_signature,payload);
+   account_controller::webhook(db, x_paystack_signature.token, provider,payload).await 
+    
 } 
