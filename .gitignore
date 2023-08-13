@@ -7,3 +7,4 @@ DockerFile
 watch.yml
 
 docker-compose.yml
+Secrets.toml

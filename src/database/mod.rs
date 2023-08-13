@@ -27,13 +27,18 @@ pub struct Database {
     client:Client
 }
 impl Database {
-    pub fn init() -> Self {
+    pub fn init(url:&String) -> Self {
         dotenv().ok();
-        let uri = match env::var("MONGO_URI") {
-            Ok(database_url) => database_url.to_string(),
-            Err(_) => format!("Error loading env variable"),
-        };
-        let client = Client::with_uri_str(uri).unwrap();
+        // let urid = match env::var("MONGO_URI") {
+        //     Ok(database_url) => database_url.to_string(),
+        //     Err(_) =>{
+        //         println!("Error loading env variable");
+        //         format!("Error loading env variable")
+        //         },
+        // };
+        // let ulr = url.to_owned();
+        println!("{}",url);
+        let client = Client::with_uri_str(url).unwrap();
         let db = client.database("rustDB");
 
         let user_schema: Collection<user::User> = db.collection("User");
