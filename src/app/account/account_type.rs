@@ -102,8 +102,10 @@ pub struct PaymentEventData {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub integration: Option<Integration>,
     pub reference: String,
+
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<String>,
+    
+    pub source: Option<Source>,
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recipient: Option<Recipient>,
@@ -116,12 +118,28 @@ pub struct PaymentEventData {
     pub event_specific: Option<HashMap<String, serde_json::Value>>,
 }
 
+ 
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum Source {
+    Concrete(ConcreteSource),
+    String(String),
+}
+ 
+
+#[derive(Debug, Deserialize, Serialize)]
+   struct ConcreteSource {
+    pub domain: String,
+  }
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Integration {
     pub id: u32,
     pub is_live: bool,
     pub business_name: String,
 }
+ 
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Recipient {

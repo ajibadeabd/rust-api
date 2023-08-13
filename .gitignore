@@ -1,3 +1,9 @@
 /target
 
 .env
+
+DockerFile
+
+watch.yml
+
+docker-compose.yml

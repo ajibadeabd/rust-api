@@ -12,18 +12,24 @@ use app::{
 };
  
 
-#[launch]
-fn rocket() -> _ {
+// #[launch]
+#[shuttle_runtime::main]
+// fn rocket() -> _ {
+pub async fn rocket() ->  shuttle_rocket::ShuttleRocket {
+
     // rocket= mount_user_route(rocket);
 let db=database::Database::init();
     let rocket = rocket::build()
 
-    .mount("/api", routes![add_user,sign_in]);
-    let rocket = rocket.mount("/api/account", routes![account_creation,deposit,withdraw,transfer_funds,transactions]);
-    let rocket = rocket.mount("/", routes![webhook])
-    .manage(db);
+    .mount("/api", routes![add_user,sign_in])
+    .mount("/api/account", routes![account_creation,deposit,withdraw,transfer_funds,transactions])
+    .mount("/", routes![webhook])
+    .manage(db).into();
 
-     rocket
+    //  rocket
+     Ok(rocket)
+
 }
+
 
 

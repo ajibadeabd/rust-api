@@ -80,7 +80,11 @@ pub async fn webhook(
     provider:String,
     payload:Json<PaymentEventRequestBody>
 ) -> Result<(), CustomError> {
-    println!(" jknjk{:?}   nn   {:?}",x_paystack_signature,payload);
+    let s= payload.data.source.as_ref().unwrap();
+    // println!("{:?} ",&payload.data.source.unwrap());
+    // println!("{:?} ",s.0);
+    //println!("{:?} ",payload.data.log);
+    // println!("{:?} ",payload.data.event_specific);
    account_controller::webhook(db, x_paystack_signature.token, provider,payload).await 
     
 } 

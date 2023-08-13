@@ -79,7 +79,7 @@ pub fn webhook(db: &State<Database>,signature:String,provider_name:String,payloa
         },
         Some(transaction)=>{
             if &eventData.transaction_type != &transaction.transaction_type {
-                println!("Unmatched transaction record with event in  transaction-type{:?} of event-type {:?}",transaction.transaction_type,eventData.transaction_type);
+              //  println!("Unmatched transaction record with event in  transaction-type{:?} of event-type {:?}",transaction.transaction_type,eventData.transaction_type);
                 return None;
             }
             if eventData.transaction_type ==TransactionType::DEPOSIT{

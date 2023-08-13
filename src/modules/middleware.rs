@@ -1,5 +1,6 @@
  
 use mongodb::bson::oid::ObjectId;
+use rocket::data::FromData;
 use rocket::http::Status;
 use rocket::request::{Outcome, FromRequest};
 use rocket::{Request, Data, State};
@@ -64,7 +65,65 @@ impl<'r> FromRequest<'r> for XStoreKeyHeader {
             Outcome::Success(XStoreKeyHeader{token:header.to_string()} )
          }
    }
+   
 }
 
+ 
 
-  
+
+
+
+// struct Person<'r> {
+//     name: &'r str,
+//     age: u16
+// }
+// #[derive(Debug)]
+// enum Error {
+//     TooLarge,
+//     NoColon,
+//     InvalidAge,
+//     Io(std::io::Error),
+// }
+
+// #[rocket::async_trait]
+// impl<'r> FromData<'r> for Person<'r> {
+//     type Error = Error;
+
+//     async fn from_data(req: &'r Request<'_>, data: Data<'r>) -> data::Outcome<'r, Self> {
+//         use Error::*;
+//         use rocket::outcome::Outcome::*;
+
+//         // Ensure the content type is correct before opening the data.
+//         let person_ct = ContentType::new("application", "x-person");
+//         if req.content_type() != Some(&person_ct) {
+//             return Forward(data);
+//         }
+
+//         // Use a configured limit with name 'person' or fallback to default.
+//         let limit = req.limits().get("person").unwrap_or(256.bytes());
+
+//         // Read the data into a string.
+//         let string = match data.open(limit).into_string().await {
+//             Ok(string) if string.is_complete() => string.into_inner(),
+//             Ok(_) => return Failure((Status::PayloadTooLarge, TooLarge)),
+//             Err(e) => return Failure((Status::InternalServerError, Io(e))),
+//         };
+
+//         // We store `string` in request-local cache for long-lived borrows.
+//         let string = request::local_cache!(req, string);
+
+//         // Split the string into two pieces at ':'.
+//         let (name, age) = match string.find(':') {
+//             Some(i) => (&string[..i], &string[(i + 1)..]),
+//             None => return Failure((Status::UnprocessableEntity, NoColon)),
+//         };
+
+//         // Parse the age.
+//         let age: u16 = match age.parse() {
+//             Ok(age) => age,
+//             Err(_) => return Failure((Status::UnprocessableEntity, InvalidAge)),
+//         };
+
+//         Success(Person { name, age })
+//     }
+// }
