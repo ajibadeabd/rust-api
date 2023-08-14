@@ -1,4 +1,4 @@
-use mongodb::{bson::{doc, oid::ObjectId, Bson}, options::UpdateModifications};
+use mongodb::{bson::{doc, oid::ObjectId}, options::UpdateModifications};
 use rocket::{State, serde::json::Json, http::Status};
 
 use crate::{
@@ -6,7 +6,7 @@ use crate::{
     database::Database, modules::{
         response_handler::{
             CustomError, CustomResult, generic_response
-        }, middleware::XStoreKeyHeader
+        }
     }, 
     app::{user::{
         user_model::User, user_service::update_user_account
@@ -137,7 +137,7 @@ pub async fn webhook(
     payload:Json<PaymentEventRequestBody>,
 ) -> Result<(), CustomError> {
  
-    let transactions = account_service::webhook(db,x_paystack_signature,provider,    payload);
+    let _transactions = account_service::webhook(db,x_paystack_signature,provider,    payload);
     // Ok(generic_response ("Transfer transaction successfully done.",Some(transactions),Some(Status::Created.code)))
 
     Ok(())

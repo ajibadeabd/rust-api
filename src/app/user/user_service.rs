@@ -6,7 +6,7 @@ use crate::database::Database;
  
  
 
-pub fn update_user_account(db: &State<Database>,filter_by:Document,update_doc:UpdateModifications,update_option:Option<UpdateOptions>)
+pub fn update_user_account(db: &State<Database>,filter_by:Document,update_doc:UpdateModifications,_update_option:Option<UpdateOptions>)
 -> Result<UpdateResult,mongodb::error::Error>
 {
     db.user().update_one(filter_by,

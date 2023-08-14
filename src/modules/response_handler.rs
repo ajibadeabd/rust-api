@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Serialize};
 use std::io::Cursor;
 use rocket::http::Status;
 use rocket::request::Request;

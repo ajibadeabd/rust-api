@@ -3,3 +3,4 @@ pub mod util;
 pub mod generic_type;
 pub mod response_handler;
 pub mod provider;
+pub mod cors;

@@ -1,8 +1,8 @@
-use std::any::Any;
+
 
 use mongodb::{results::{InsertOneResult, UpdateResult}, bson::{ Document, doc, oid::ObjectId }, options::{FindOneOptions, UpdateModifications, UpdateOptions}, sync::ClientSession};
 use rocket::{State, serde::json::Json};
-use serde_json::Value;
+
 
 use crate::{database::Database, modules::{response_handler::CustomError, provider::payment::{PaymentProviderHashMap, paystack::PaymentEvent}}, app::account::transaction_service};
 
@@ -14,9 +14,9 @@ use super::{account_model::Account, account_type::{PaymentEventRequestBody, Tran
 
 
 
-use sha2::{Sha256, Sha512};
-use hmac::{Hmac, Mac};
-use hex_literal::hex;
+
+use hmac::{Mac};
+
 
 
 
@@ -30,7 +30,7 @@ pub fn create_new_account(db: &State<Database>,new_account_data: Account)
 
     match new_account {
         Ok(account)=>Ok(account),
-        Err(error)=>Err(CustomError::NotFound("Unable to create an account".to_string()))
+        Err(_error)=>Err(CustomError::NotFound("Unable to create an account".to_string()))
     }
 }
 
@@ -41,7 +41,7 @@ pub fn get_account(db: &State<Database>,find_by:Document,filer_by:Option<FindOne
     db.account().find_one(find_by,filer_by)
 }
 
-pub fn accounts(db: &State<Database>,currency:Option<String>,user_id:Option<ObjectId>)
+pub fn accounts(db: &State<Database>,_currency:Option<String>,user_id:Option<ObjectId>)
 ->  Vec<Account> 
 
 {
@@ -79,7 +79,7 @@ pub fn webhook(db: &State<Database>,signature:String,provider_name:String,payloa
         },
         Some(transaction)=>{
             if &eventData.transaction_type != &transaction.transaction_type {
-                println!("Unmatched transaction record with event in  transaction-type{:?} of event-type {:?}",transaction.transaction_type,eventData.transaction_type);
+              //  println!("Unmatched transaction record with event in  transaction-type{:?} of event-type {:?}",transaction.transaction_type,eventData.transaction_type);
                 return None;
             }
             if eventData.transaction_type ==TransactionType::DEPOSIT{

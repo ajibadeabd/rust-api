@@ -2,19 +2,17 @@
 use mongodb::{
     bson::{oid::ObjectId,doc, Document},
     sync::{Collection},
-    results::{InsertOneResult, UpdateResult}, options::{FindOneOptions, UpdateModifications, UpdateOptions, FindOptions}
+    results::{InsertOneResult, UpdateResult}, options::{UpdateModifications, UpdateOptions}
 };
 use chrono::{DateTime, Utc};
-use rocket::http::{ext::IntoCollection, private::SmallVec};
+
 use serde::{Serialize, Deserialize};
-
-
 
 
 
 extern crate bcrypt;
 
-use bcrypt::{DEFAULT_COST, hash, verify};
+use bcrypt::{DEFAULT_COST, hash};
 
 use serde::Serializer;
 
@@ -67,7 +65,7 @@ impl<'a> Init<'a> {
         Init { col }
     }
 
-    pub fn save(&self, mut user: &mut User)->Result<InsertOneResult, mongodb::error::Error> {
+    pub fn save(&self, user: &mut User)->Result<InsertOneResult, mongodb::error::Error> {
         user.created_at = Some(Utc::now());
         user.updated_at = Some(Utc::now());
         user.password = hash(user.password.to_string(),DEFAULT_COST).unwrap();

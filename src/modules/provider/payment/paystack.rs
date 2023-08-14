@@ -1,12 +1,12 @@
 use hmac::{Hmac, Mac};
-use rocket::futures::future::ok;
-use rocket::serde::json::{self, Json};
+
+use rocket::serde::json::{Json};
 use sha2::Sha512;
 use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::{Client, Body};
 use serde::{Serialize, Deserialize};
 use std::{collections::HashMap,env};
-use log::error;
+
 use dotenv::dotenv;
 use serde_json::from_str;
 use hex_literal::hex;
@@ -268,8 +268,8 @@ pub async fn get_account_name(&self,account_number: &str, bank_code: &str) -> Re
 }
 
 
-pub fn verify_webhook_payload(&self, signature: &str, payload: &Json<PaymentEventRequestBody>) -> Option<PaymentEvent> {
-    let payload_string = serde_json::to_string(&payload.0).unwrap();
+pub fn verify_webhook_payload(&self, _signature: &str, payload: &Json<PaymentEventRequestBody>) -> Option<PaymentEvent> {
+    let _payload_string = serde_json::to_string(&payload.0).unwrap();
 
 
     // Create a new HMAC instance with the secret key
@@ -289,7 +289,7 @@ pub fn verify_webhook_payload(&self, signature: &str, payload: &Json<PaymentEven
     println!("{:?}",expected);
 
     // Get the signature from the payload (assuming it's already present)
-    let signature = "<replace with the actual signature>";
+    let _signature = "<replace with the actual signature>";
     if false {
         return None
     }
