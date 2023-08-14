@@ -43,7 +43,7 @@ pub async fn withdraw(
 pub async fn transfer_funds(
     db: &State<Database>,
     transfer_data: Json<TransferPaymentData>,
-     auth_user: User
+    auth_user: User
     )-> Result<CustomResult, CustomError> {
        account_controller::transfer_funds(db, transfer_data , auth_user).await 
 }

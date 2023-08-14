@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use rocket_okapi::{openapi, routes_with_openapi, JsonSchema};
+// use rocket_okapi::{openapi, routes_with_openapi, JsonSchema};
 
 
 use super::{
@@ -13,7 +13,15 @@ use super::{
 
  
 
-#[derive(Debug, Serialize, Deserialize,JsonSchema)]
+#[derive(Debug, Serialize, Deserialize,Clone)]
+pub struct UserSignUpRequestType {
+    pub password: String,
+    pub email: String,
+    pub last_name: String,
+    pub first_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserLoginRequestType {
     pub password: String,
     pub email: String,

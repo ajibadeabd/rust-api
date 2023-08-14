@@ -1,4 +1,5 @@
  
+use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
 
 use rocket::http::Status;
@@ -34,8 +35,11 @@ impl<'r> FromRequest<'r> for User {
         DecodeJwtHelper::Ok(token)=>{
        let database = request.guard::<&State<Database>>().await;
        let user = database.unwrap().user().find_by_id(
-        &ObjectId::parse_str(&token.claims.user_id).unwrap()
+        &ObjectId::parse_str(&token.claims.user_id).unwrap(),
+        Some(doc!{"password":0}
+    )
     );
+    println!("{:?}", user);
        match user {
         Ok(Some(user)) =>  Outcome::Success(user),
         _=>{

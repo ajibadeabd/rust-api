@@ -2,7 +2,7 @@
 use mongodb::{
     bson::{oid::ObjectId,doc, Document},
     sync::{Collection},
-    results::{InsertOneResult, UpdateResult}, options::{UpdateModifications, UpdateOptions}
+    results::{InsertOneResult, UpdateResult}, options::{UpdateModifications, UpdateOptions, FindOptions, FindOneOptions}
 };
 use chrono::{DateTime, Utc};
 
@@ -15,6 +15,8 @@ extern crate bcrypt;
 use bcrypt::{DEFAULT_COST, hash};
 
 use serde::Serializer;
+
+use super::types::UserSignUpRequestType;
 
 pub fn serialize_object_id<S>(object_id: &Option<ObjectId>, serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -51,7 +53,8 @@ pub struct User {
         pub email: String,
         #[serde(serialize_with = "serialize_object_ids")]
         pub accounts: Option<Vec<ObjectId>>,
-        pub password: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pub password:Option< String>,
         pub created_at: Option<DateTime<Utc>>,
         pub updated_at: Option<DateTime<Utc>>,
 }
@@ -65,17 +68,38 @@ impl<'a> Init<'a> {
         Init { col }
     }
 
-    pub fn save(&self, user: &mut User)->Result<InsertOneResult, mongodb::error::Error> {
-        user.created_at = Some(Utc::now());
-        user.updated_at = Some(Utc::now());
-        user.password = hash(user.password.to_string(),DEFAULT_COST).unwrap();
-        self.col.insert_one(user, None)
+    pub fn save(&self, user: &mut UserSignUpRequestType )->Result<InsertOneResult, mongodb::error::Error> {
+        let new_user = User {
+            created_at : Some(Utc::now()),
+            updated_at : Some(Utc::now()),
+            first_name:user.first_name.to_owned(),
+            last_name:user.last_name.to_owned(),
+            accounts:None,
+            password:Some(user.password.to_owned()),
+            email:user.email.to_owned(),
+            id:None
+        };
+            let hashed_password = hash(user.password.to_owned(), DEFAULT_COST).unwrap();
+            user.password = hashed_password;
+        // }
+        self.col.insert_one(&new_user, None)
     }
-    pub fn find_one(&self, find_by: &str,find_with: &str)->Result<std::option::Option<User>, mongodb::error::Error> {
-        self.col.find_one(doc! {find_by:find_with}, None)
+    pub fn find_one(&self, find_by: &str,find_with: &str,find_option:Option<Document>)->Result<std::option::Option<User>, mongodb::error::Error> {
+      
+    let find_one_options = FindOneOptions::builder()
+    .projection( find_option)
+    .build();
+        
+        self.col.find_one(doc! {find_by:find_with}, find_one_options)
     }
-    pub fn find_by_id(&self, object_id: &ObjectId)->Result<std::option::Option<User>, mongodb::error::Error> {
-        self.col.find_one(doc!{"_id":object_id}, None)
+    pub fn find_by_id(&self, object_id: &ObjectId,find_option:Option<Document>)->Result<std::option::Option<User>, mongodb::error::Error> {
+     
+    let find_one_options = FindOneOptions::builder()
+        .projection( find_option)
+        .build();
+    //    let option = 
+       
+        self.col.find_one(doc!{"_id":object_id}, find_one_options)
     }
     pub fn update_one(&self, filter_by:Document,update:UpdateModifications,update_option:Option<UpdateOptions>)->Result<UpdateResult, mongodb::error::Error> {
         self.col.update_one(filter_by,update,update_option)
