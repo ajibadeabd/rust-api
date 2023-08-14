@@ -1,20 +1,20 @@
-use bcrypt::{DEFAULT_COST, hash, verify};
-use mongodb::{bson::{oid::ObjectId, doc}, options::UpdateModifications, Cursor};
-use rocket::{ http::Status, serde::json::Json,State, figment::value::Value};
-use serde::{Serialize,Deserialize};
+use bcrypt::{verify};
+use mongodb::{bson::{doc}, options::UpdateModifications};
+use rocket::{ serde::json::Json,State};
+
 use crate::{
     database::{
         Database
     },
     modules::{
-        util::{self, encode_token_and_refresh}, response_handler::{CustomError, CustomResult, generic_response}
+        util::{encode_token_and_refresh}, response_handler::{CustomError, CustomResult, generic_response}
     }, app::account::{account_service::create_new_account, account_model::Account
         }
 };
 
 use super::{
     user_model::User,
-    types::{UserLoginRequestType, LoginResponse, }, user_service::{update_user_account, self}
+    types::{UserLoginRequestType, LoginResponse, }, user_service::{update_user_account}
 };
  
 pub fn sign_up(db: &State<Database>,mut user:Json<User>)
@@ -42,7 +42,7 @@ pub fn sign_up(db: &State<Database>,mut user:Json<User>)
            None
        )
         }),
-        Err(err) => {
+        Err(_err) => {
             return Err(CustomError::BadRequest("Email already registered".to_string()))},
     }
 }

@@ -1,13 +1,13 @@
-use std::time::Duration;
+
 
 use mongodb::{
     sync::{Client, ClientSession},
-    results::InsertOneResult, bson::{oid::ObjectId, Document, Bson, doc}, options::{FindOneOptions, UpdateModifications, self, TransactionOptions, Acknowledgment, WriteConcern, ReadConcern}};
-use rocket::{State, serde::json::Json, http::Status};
+    results::InsertOneResult, bson::{oid::ObjectId, Document, Bson, doc}, options::{UpdateModifications, TransactionOptions, Acknowledgment, WriteConcern, ReadConcern}};
+use rocket::{State, serde::json::Json};
 
 use crate::{database::Database, modules::{response_handler::CustomError, provider::payment::{PaymentProviderHashMap, PaystackApi, paystack::{TransactionDTO, DepositResponseDataDetails, TransferPAymentPayload}}}, app::{user::user_model::User, account::account_type::{TransactionStatus, TransactionType}}};
 
-use super::{account_type::{AccountData, DepositAccountData, WithdrawAccountData, TransferPaymentData, TransactionsQueryData}, account_model::Account, transaction_model::Transaction, account_service::{get_account, update_account_transaction}};
+use super::{account_type::{DepositAccountData, WithdrawAccountData, TransferPaymentData, TransactionsQueryData}, transaction_model::Transaction, account_service::{get_account, update_account_transaction}};
 
 
 
@@ -76,7 +76,7 @@ pub async fn lock_amount(db: &State<Database>,user_account_id:  &ObjectId, amoun
        let update_doc = UpdateModifications::Document(
         doc!{ "$inc": { "balance": -amount, "locked_balance": amount }}
     );
-       let new_tran =  db.account().update_one(doc!{
+       let _new_tran =  db.account().update_one(doc!{
         "_id":user_account_id,
         }, update_doc, None,  session);
 
@@ -88,7 +88,7 @@ pub async fn withdraw_fund(db: &State<Database>,user_account_id:  &ObjectId, amo
      doc!{ "$inc": { "locked_balance": -amount }}
  );
    
-    let new_tran =  db.account().update_one(doc!{
+    let _new_tran =  db.account().update_one(doc!{
      "_id":user_account_id,
      }, update_doc, None, session);
 
@@ -100,7 +100,7 @@ pub async fn deposit_fund(db: &State<Database>,user_account_id:  &ObjectId, amou
     let update_doc = UpdateModifications::Document(
      doc!{ "$inc": { "balance": amount }}
  );
-    let new_tran =  db.account().update_one(doc!{
+    let _new_tran =  db.account().update_one(doc!{
      "_id":user_account_id,
      }, update_doc, None, session);
 }

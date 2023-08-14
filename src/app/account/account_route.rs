@@ -1,17 +1,17 @@
 
-use rocket::{ Request,serde::json::Json,State, http::{uri::Query, Header, Status}, request::FromRequest,  };
-use serde::{Deserialize, Serialize};
+use rocket::{ serde::json::Json,State,  };
 
-use crate::{ modules::{ response_handler::{ CustomError, CustomResult }, middleware::XStoreKeyHeader, provider::payment::paystack::PaymentEvent
+
+use crate::{ modules::{ response_handler::{ CustomError, CustomResult }, middleware::XStoreKeyHeader
 }, database::Database, app::{user::user_model::User, account::account_type::{DepositAccountData, WithdrawAccountData, TransferPaymentData, PaymentEventRequestBody}}};
 use super::{
     account_type::{AccountData, TransactionsQueryData},
     account_controller
 };
-use rocket::request::{Outcome} ;
 
 
-use std::collections::HashMap;
+
+
  
 #[post("/", data = "<account_data>")]
 pub async fn account_creation(
@@ -80,7 +80,7 @@ pub async fn webhook(
     provider:String,
     payload:Json<PaymentEventRequestBody>
 ) -> Result<(), CustomError> {
-    let s= payload.data.source.as_ref().unwrap();
+    let _s= payload.data.source.as_ref().unwrap();
     // println!("{:?} ",&payload.data.source.unwrap());
     // println!("{:?} ",s.0);
     //println!("{:?} ",payload.data.log);

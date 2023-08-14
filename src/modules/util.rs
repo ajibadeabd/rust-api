@@ -59,7 +59,7 @@ pub fn decode_jwt(token: &str, secret: &str) -> DecodeJwtHelper {
     );
     match token {
         Ok(token_string) => DecodeJwtHelper::Ok(token_string),
-        Err(err) => {
+        Err(_err) => {
             DecodeJwtHelper::Err},
     }
 }

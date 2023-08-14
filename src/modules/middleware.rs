@@ -1,9 +1,9 @@
  
 use mongodb::bson::oid::ObjectId;
-use rocket::data::FromData;
+
 use rocket::http::Status;
 use rocket::request::{Outcome, FromRequest};
-use rocket::{Request, Data, State};
+use rocket::{Request, State};
 
 use crate::app::user::user_model::User;
 use crate::database::Database;

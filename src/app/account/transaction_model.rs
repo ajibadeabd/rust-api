@@ -4,7 +4,7 @@ use mongodb::{
     sync::{Collection, ClientSession},
     results::{InsertOneResult, UpdateResult}, options::{UpdateOptions, UpdateModifications}
 };
-use rocket::http::ext::IntoCollection;
+
 use serde::{Serialize, Deserialize};
 
 use crate::app::user::user_model::serialize_object_id;

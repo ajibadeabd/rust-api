@@ -25,6 +25,7 @@ shuttle-rocket = "0.23.0"
 shuttle-runtime = "0.23.0"
 tokio = "1.26.0"
 shuttle-secrets = "0.23.0"
+rocket_cors = "0.6.0-alpha2"
 
 [dependencies.mongodb]
 version = "2.2.0"
@@ -34,6 +35,6 @@ features = ["sync"]
 [scripts]
 start = "cargo watch -s 'run'"
 
-[[bin]]
-name="app_entry_point"
-path="src/server.rs"
+# [[bin]]
+# name="app_entry_point"
+# path="src/server.rs"

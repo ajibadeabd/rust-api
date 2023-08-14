@@ -1,19 +1,19 @@
 // use crate::{
 //     app::{user::{user_controller}},
 // };
-use rocket::{ http::Status, serde::json::Json,State, figment::value::Value};
+
 use serde::{Deserialize, Serialize};
 
-use crate::modules::util::Token;
+use rocket_okapi::{openapi, routes_with_openapi, JsonSchema};
+
 
 use super::{
-    user_model::User,
-    user_controller
+    user_model::User
 };
 
  
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize,JsonSchema)]
 pub struct UserLoginRequestType {
     pub password: String,
     pub email: String,
