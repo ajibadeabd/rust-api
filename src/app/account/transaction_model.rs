@@ -21,6 +21,7 @@ pub struct Transaction {
         pub fee: f64,
         pub receiver_id: String,
         pub giver_id: String,
+        // pub description: String,
         pub provider_name: String,
         pub transaction_type: TransactionType,
         pub status: TransactionStatus,

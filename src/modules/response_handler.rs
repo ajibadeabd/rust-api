@@ -101,6 +101,7 @@ where
     let response_json = GenericResponse {
         message: message.to_string(),
         status: "success".to_string(),
+        success:true,
         data,
     };
 

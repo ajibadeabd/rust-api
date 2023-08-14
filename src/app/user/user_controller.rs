@@ -14,10 +14,10 @@ use crate::{
 
 use super::{
     user_model::User,
-    types::{UserLoginRequestType, LoginResponse, }, user_service::{update_user_account}
+    types::{UserLoginRequestType, LoginResponse, UserSignUpRequestType, }, user_service::{update_user_account}
 };
  
-pub fn sign_up(db: &State<Database>,mut user:Json<User>)
+pub fn sign_up(db: &State<Database>,mut user:Json<UserSignUpRequestType >)
 // -> ResponseType<Option<String>>
 -> Result<CustomResult, CustomError>
 {
@@ -37,7 +37,7 @@ pub fn sign_up(db: &State<Database>,mut user:Json<User>)
                 }
             
           generic_response::<Option<String>>(
-            "has successfully logged in.",
+            "user registered successfully.",
            None,
            None
        )
@@ -52,13 +52,14 @@ pub fn sign_in(db: &State<Database>,user:Json<UserLoginRequestType>)
 -> Result<CustomResult, CustomError>
 
 {
-    let user_detail = db.user().find_one("email",&user.email);
+    let user_detail = db.user().find_one("email",&user.email,None);
     
     match user_detail {
         Ok(None)=>Err(CustomError::NotFound("User not found".to_string())),
         Err(_)=>Err(CustomError::NotFound("Unable to log in".to_string())),
         Ok(Some(registered_user))=>{
-          let is_password_valid  = verify(&user.password,&registered_user.password);
+             
+          let is_password_valid  = verify(&user.password,registered_user.password.as_ref().unwrap());
           if let Ok(false) =is_password_valid{
            return  Err(CustomError::NotFound("Not Found".to_string()))
           }
