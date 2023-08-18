@@ -176,8 +176,8 @@ pub struct ResponseDataDetails {
 }
 #[derive(Debug, Serialize,Deserialize,Clone)]
 pub struct DepositResponseDataDetails {
-    checkout_url: String,
-    transaction_reference: String,
+    pub checkout_url: String,
+    pub transaction_reference: String,
 }
 
 impl PaystackApi {

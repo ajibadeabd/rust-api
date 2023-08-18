@@ -21,7 +21,7 @@ pub struct Transaction {
         pub fee: f64,
         pub receiver_id: String,
         pub giver_id: String,
-        // pub description: String,
+        pub description:Option<String>,
         pub provider_name: String,
         pub transaction_type: TransactionType,
         pub status: TransactionStatus,
@@ -46,7 +46,8 @@ impl Transaction {
         giver_id: String,
         provider_name: String,
         transaction_type: TransactionType,
-        status:TransactionStatus
+        status:TransactionStatus,
+        description:String
     ) -> Self {
         Self {
             amount,
@@ -57,6 +58,7 @@ impl Transaction {
             fee,
             receiver_id,
             giver_id,
+            description:Some(description),
             provider_name,
             transaction_type,
             status,
@@ -93,11 +95,11 @@ impl<'a> Init<'a> {
     Ok(cursors.map(|doc| doc.unwrap()).collect())
     }
 
-    pub fn update_one(&self, filter_by:Document,update:UpdateModifications,update_option:Option<UpdateOptions>,session: Option<&mut ClientSession>)->Result<UpdateResult, mongodb::error::Error> {
+    pub fn update_one(&self, filter_by:Document,update:&UpdateModifications,update_option:Option<UpdateOptions>,session: Option<&mut ClientSession>)->Result<UpdateResult, mongodb::error::Error> {
            if let Some(session) = session {
-            return  self.col.update_one_with_session(filter_by,update,update_option,session)
+            return  self.col.update_one_with_session(filter_by,update.to_owned(),update_option,session)
            }
-            self.col.update_one(filter_by,update,update_option)
+            self.col.update_one(filter_by,update.to_owned(),update_option)
     }
 }
  

@@ -28,7 +28,7 @@ shuttle-secrets = "0.23.0"
 rocket_cors = "0.6.0-alpha2"
 
 [dependencies.mongodb]
-version = "2.2.0"
+version = "2.6.0"
 default-features = false
 features = ["sync"] 
 

@@ -63,11 +63,21 @@ pub struct TransactionsQueryData {
    pub currency: Option<String>,
    pub limit: Option<String>,
    pub page: Option<String>,
+ 
+}
+
+#[derive(Debug,Deserialize,Serialize)]
+pub struct DashboardResponse {
+   pub accounts:Vec<Account>,
+   pub transactions:Vec<Transaction>
+ 
 }
 
 
 
 use std::collections::HashMap;
+
+use super::{account_model::Account, transaction_model::Transaction};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PaymentEventRequestBody {

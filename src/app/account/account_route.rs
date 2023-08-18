@@ -31,6 +31,13 @@ pub async fn deposit(
        account_controller::initialize_deposit(db, deposit_data,auth_user).await 
 }
 
+// #[get("/deposit")]
+// pub async fn get_deposit(
+//     db: &State<Database>,
+//      auth_user: User
+//     )-> Result<CustomResult, CustomError> {
+//        account_controller::get_deposit(db,auth_user).await 
+// }
 #[post("/withdraw", data = "<withdraw_data>")]
 pub async fn withdraw(
     db: &State<Database>,
@@ -46,6 +53,14 @@ pub async fn transfer_funds(
     auth_user: User
     )-> Result<CustomResult, CustomError> {
        account_controller::transfer_funds(db, transfer_data , auth_user).await 
+}
+
+#[get("/dashboard")]
+pub async fn dashboard(
+    db: &State<Database>,
+    auth_user: User
+    )-> Result<CustomResult, CustomError> {
+       account_controller::dashboard(db,auth_user).await 
 }
 
  
@@ -81,10 +96,17 @@ pub async fn webhook(
     payload:Json<PaymentEventRequestBody>
 ) -> Result<(), CustomError> {
     let _s= payload.data.source.as_ref().unwrap();
-    // println!("{:?} ",&payload.data.source.unwrap());
-    // println!("{:?} ",s.0);
-    //println!("{:?} ",payload.data.log);
-    // println!("{:?} ",payload.data.event_specific);
+     
    account_controller::webhook(db, x_paystack_signature.token, provider,payload).await 
     
-} 
+} // Route handler for /transactions (matches all POST requests to /transactions with query parameters)
+// #[get("/dashboard") ]
+// pub async fn dashboard(
+//     db: &State<Database>,
+//     auth_user:User
+// ) -> Result<(), CustomError> {
+     
+//    account_controller::dashboard(db, auth_user).await
+    
+// } 
+
