@@ -15,7 +15,7 @@ use crate::{
 };
 
 use super::{
-    account_type::{AccountData, DepositAccountData, WithdrawAccountData, TransferPaymentData, TransactionsQueryData, PaymentEventRequestBody},
+    account_type::{AccountData, DepositAccountData, WithdrawAccountData, TransferPaymentData, TransactionsQueryData, PaymentEventRequestBody, DashboardResponse},
     account_service::{self, get_account}, account_model::Account,
 };
 
@@ -103,6 +103,26 @@ pub async fn initialize_deposit(db: &State<Database>,deposit_data: Json<DepositA
         }
     }
 }
+// pub async fn get_deposit(db: &State<Database>, auth_user:User)
+// -> Result<CustomResult, CustomError>
+// {
+//     let new_account = account_service::get_account(db,doc!{
+//         "user_id":auth_user.id,
+//         "currency":&deposit_data.currency,
+//         "channel":"INTERNAL",
+//     }, None).unwrap();
+
+//     match new_account {
+//         None=> Err(CustomError::BadRequest(format!("User has no account in {}", deposit_data.currency))),
+//         Some(user_account)=>{
+//            let response =  transaction_service::initialize_deposit(db,deposit_data, user_account.id, auth_user.email).await;
+//     Ok(generic_response ("Deposit link successfully created.",Some(response.unwrap()),Some(Status::Created.code)))
+//         }
+//     }
+// }
+
+
+
 
 pub async fn transfer_funds(db: &State<Database>,transfer_data: Json<TransferPaymentData >,auth_user:User)
 -> Result<CustomResult, CustomError>
@@ -113,18 +133,50 @@ pub async fn transfer_funds(db: &State<Database>,transfer_data: Json<TransferPay
 }
 
 
+pub async fn dashboard(db: &State<Database>,auth_user:User)
+-> Result<CustomResult, CustomError>
+{
+    
+     let accounts  = account_service::accounts_with_transaction(db,None,&auth_user.id);
+    //  let response = DashboardResponse{
+    //     accounts,
+    //     transactions`    
+    //  };
+
+      let query_param = TransactionsQueryData {
+        // limit:Some("2".to_owned()),
+        transaction_id: None,
+        limit: None,
+        account_id: None,
+        currency: None,
+        page: None,
+      };
+     let accounts = account_service::accounts(db,None,&auth_user.id);
+     let transactions = transaction_service::transactions(db,Some(query_param),&auth_user);
+     println!("{:?}",transactions);
+let response = DashboardResponse {
+    accounts,
+    transactions
+
+};
+
+    Ok(generic_response ("Transfer transaction successfully done.",Some(response),Some(Status::Created.code)))
+}
+
+
 pub async fn transactions(db: &State<Database>,transaction_data: TransactionsQueryData,auth_user:User)
 -> Result<CustomResult, CustomError>
 {
-     let transactions = transaction_service::transactions(db,transaction_data,auth_user);
+     let transactions = transaction_service::transactions(db,Some(transaction_data),&auth_user);
+
     Ok(generic_response ("Transfer transaction successfully done.",Some(transactions),Some(Status::Created.code)))
 }
 
 pub async fn accounts(db: &State<Database>,currency:Option<String>,auth_user:User)
 -> Result<CustomResult, CustomError>
 {
-     let transactions = account_service::accounts(db,currency,auth_user.id);
-    Ok(generic_response ("Transfer transaction successfully done.",Some(transactions),Some(Status::Created.code)))
+     let accounts = account_service::accounts(db,currency,&auth_user.id);
+    Ok(generic_response ("Transfer transaction successfully done.",Some(accounts),Some(Status::Created.code)))
 }
  
 

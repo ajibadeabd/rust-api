@@ -27,6 +27,8 @@ pub enum CustomError {
 
     //#[resp("{0}")]
     BadRequest(String),
+    //#[resp("{0}")]
+    BadInput(String),
 }
 
 impl CustomError {
@@ -34,6 +36,7 @@ impl CustomError {
         match self {
             CustomError::Internal(_) => Status::InternalServerError,
             CustomError::NotFound(_) => Status::NotFound,
+            CustomError::BadInput(_) => Status::UnprocessableEntity,
             _ => Status::BadRequest,
         }
     }
@@ -42,6 +45,8 @@ impl CustomError {
             CustomError::Internal(err) =>err.to_owned(),
             CustomError::NotFound(err) => err.to_owned(),
             CustomError::BadRequest(err) => err.to_owned(),
+            CustomError:: BadInput(err) => err.to_owned(),
+           
         }
     }
 }

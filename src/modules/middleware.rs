@@ -39,7 +39,6 @@ impl<'r> FromRequest<'r> for User {
         Some(doc!{"password":0}
     )
     );
-    println!("{:?}", user);
        match user {
         Ok(Some(user)) =>  Outcome::Success(user),
         _=>{

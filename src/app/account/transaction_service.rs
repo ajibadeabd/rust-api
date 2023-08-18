@@ -2,7 +2,7 @@
 
 use mongodb::{
     sync::{Client, ClientSession},
-    results::InsertOneResult, bson::{oid::ObjectId, Document, Bson, doc}, options::{UpdateModifications, TransactionOptions, Acknowledgment, WriteConcern, ReadConcern}};
+    results::{InsertOneResult, UpdateResult}, bson::{oid::ObjectId, Document, Bson, doc}, options::{UpdateModifications, TransactionOptions, Acknowledgment, WriteConcern, ReadConcern, UpdateOptions}};
 use rocket::{State, serde::json::Json};
 
 use crate::{database::Database, modules::{response_handler::CustomError, provider::payment::{PaymentProviderHashMap, PaystackApi, paystack::{TransactionDTO, DepositResponseDataDetails, TransferPAymentPayload}}}, app::{user::user_model::User, account::account_type::{TransactionStatus, TransactionType}}};
@@ -20,6 +20,20 @@ pub fn create_transaction(db: &State<Database>,new_transaction:&Transaction)
 {
      db.transaction().save(new_transaction)
 }
+// pub fn update_transaction(db: &State<Database>,new_transaction:&Transaction)
+// -> Result<InsertOneResult,mongodb::error::Error>
+// {
+//      db.transaction().save(new_transaction)
+// }
+
+
+
+pub fn update_transaction(db: &State<Database>,filter_by:Document,update_doc:&UpdateModifications,update_option:Option<UpdateOptions>,session:Option<&mut ClientSession>)-> Result<UpdateResult,mongodb::error::Error>{
+    db.transaction().update_one(filter_by,update_doc,update_option,session)
+  }
+
+
+
 pub fn get_provider_name(amount: &f64, currency: &str)->Option<std::string::String>{
     let provider = PaymentProviderHashMap::new();
     provider.get_provider_name(amount, currency)
@@ -47,6 +61,8 @@ pub async  fn initialize_deposit(db: &State<Database>,deposit_data:Json<DepositA
         provider_name.clone().unwrap(),
         TransactionType::DEPOSIT,
         TransactionStatus::PENDING,
+        "deposit from bank".to_string()
+        
     );
     let created_transaction = create_transaction(db,&new_transaction).unwrap();
     let transaction_id   = extract_object_id(&created_transaction.inserted_id);
@@ -54,7 +70,7 @@ pub async  fn initialize_deposit(db: &State<Database>,deposit_data:Json<DepositA
         doc!{ "$push": { "transactions": transaction_id} }
     );
     let filter_data = doc!{"_id":&user_account_id.unwrap()};
-    let _ = update_account_transaction(db,filter_data,update_doc,None,None);
+    let _ = update_account_transaction(db,&filter_data,&update_doc,None,None);
 
             let provider_instance = get_provider_instance (provider_name.unwrap().as_str()).unwrap();
             let dto = TransactionDTO {
@@ -62,9 +78,22 @@ pub async  fn initialize_deposit(db: &State<Database>,deposit_data:Json<DepositA
                 currency:deposit_data.currency.clone(),
                 amount: deposit_data.amount.clone(),
                 userEmail: email,
-                callbackUrl: "http://localhost:8000/callback".to_string()
+                callbackUrl: "http://localhost:3000/deposit?state=FRr".to_string()
             };  
-        provider_instance.initialize_transaction(dto).await
+        let response: DepositResponseDataDetails = provider_instance.initialize_transaction(dto).await?;
+        let update_doc = UpdateModifications::Document(
+            doc!{ "provider_reference": &response.transaction_reference} 
+        );
+        println!("{}",response.transaction_reference);
+       let filter_data = doc!{"receiver_id":&user_account_id.unwrap().to_string()};
+       println!("{:?}",filter_data);
+
+
+        let _ = update_transaction(db,filter_data,&update_doc,None,None);
+
+
+
+        Ok(response)
     
 }
 
@@ -76,9 +105,9 @@ pub async fn lock_amount(db: &State<Database>,user_account_id:  &ObjectId, amoun
        let update_doc = UpdateModifications::Document(
         doc!{ "$inc": { "balance": -amount, "locked_balance": amount }}
     );
-       let _new_tran =  db.account().update_one(doc!{
+       let _new_tran =  db.account().update_one(&doc!{
         "_id":user_account_id,
-        }, update_doc, None,  session);
+        }, &update_doc, None,  session);
 
 }
 
@@ -88,9 +117,9 @@ pub async fn withdraw_fund(db: &State<Database>,user_account_id:  &ObjectId, amo
      doc!{ "$inc": { "locked_balance": -amount }}
  );
    
-    let _new_tran =  db.account().update_one(doc!{
+    let _new_tran =  db.account().update_one(&doc!{
      "_id":user_account_id,
-     }, update_doc, None, session);
+     }, &update_doc, None, session);
 
 
 }
@@ -100,9 +129,9 @@ pub async fn deposit_fund(db: &State<Database>,user_account_id:  &ObjectId, amou
     let update_doc = UpdateModifications::Document(
      doc!{ "$inc": { "balance": amount }}
  );
-    let _new_tran =  db.account().update_one(doc!{
+    let _new_tran =  db.account().update_one(&doc!{
      "_id":user_account_id,
-     }, update_doc, None, session);
+     }, &update_doc, None, session);
 }
 
 
@@ -122,6 +151,7 @@ pub async  fn initialize_withdrawal(db: &State<Database>,withdraw_data:Json<With
         provider_name.clone().unwrap(),
         TransactionType::WITHDRAWAL,
         TransactionStatus::PENDING,
+        "withdrawal to bank account".to_string()
     );  
     // ClientSession;
     let  mut session  = Client::start_session(&db.client(),None).unwrap();
@@ -144,7 +174,7 @@ pub async  fn initialize_withdrawal(db: &State<Database>,withdraw_data:Json<With
         doc!{ "$push": { "transactions": transaction_id} }
     );
     let filter_data = doc!{"_id":&user_account_id.unwrap()};
-    let _ = update_account_transaction(db,filter_data,update_doc,None,None);
+    let _ = update_account_transaction(db,&filter_data,&update_doc,None,None);
 
 
     let provider_instance = get_provider_instance(provider_name.unwrap().as_str()).unwrap();
@@ -172,7 +202,7 @@ pub async  fn initialize_withdrawal(db: &State<Database>,withdraw_data:Json<With
     let _ =  db.transaction().update_one(
         doc!{
             "_id":transaction_id,
-        },update_doc, None,
+        },&update_doc, None,
         Some(&mut session));
     new_transaction.provider_reference = Some(transfer_response.recipient_code);
     new_transaction.provider_fee = Some(0.0);
@@ -187,7 +217,6 @@ pub async  fn initialize_withdrawal(db: &State<Database>,withdraw_data:Json<With
 pub async fn transfer_fund(db: &State<Database>,transfer_data:Json<TransferPaymentData>,auth_user:User)
 -> Result< Transaction,CustomError>
 {
-    println!("{:?}",transfer_data);
     let user_account  = get_account(db,doc!{
         "user_id":auth_user.id,
         "currency":&transfer_data.currency
@@ -235,6 +264,7 @@ pub async fn transfer_fund(db: &State<Database>,transfer_data:Json<TransferPayme
         "INTERNAL".to_string(),
         TransactionType::TRANSFER,
         TransactionStatus::SUCCESS,
+        "Transfer".to_string()
     );
     let new_transaction_response = create_transaction(db, &new_transaction);
     let transaction_id   = extract_object_id(&new_transaction_response.unwrap().inserted_id);
@@ -244,8 +274,10 @@ pub async fn transfer_fund(db: &State<Database>,transfer_data:Json<TransferPayme
     let update_doc = UpdateModifications::Document(
         doc!{ "$push": { "transactions": transaction_id} }
     );
-    let filter_data = doc!{"_id":&user_account.id.unwrap()};
-    let _ = update_account_transaction(db,filter_data,update_doc,None,None);
+    let filter_data_receiver = doc!{"_id":&receiver_account.id.unwrap()};
+    let filter_data_sender = doc!{"_id":&user_account.id.unwrap()};
+    // let _ = update_account_transaction(db,filter_data_sender,&update_doc,None,None);
+    // let _ = update_account_transaction(db,filter_data_receiver,&update_doc,None,None);
 
     Ok(new_transaction)
 }
@@ -262,17 +294,20 @@ pub fn get_transaction(
 
     pub fn transactions(
     db: &State<Database>,
-    transaction_data:TransactionsQueryData,
-    auth_user:User
+    transaction_data:Option<TransactionsQueryData>,
+    auth_user:&User
 )->Vec<Transaction>{
-     let user_accounts: Vec<String> = auth_user.accounts.unwrap().iter().map(|id| id.to_hex()).collect();
+     let user_accounts: Vec<String> = auth_user.accounts.as_ref().unwrap().iter().map(|id| id.to_hex()).collect();
 
-    let mut filter_by = doc! {
+     let mut filter_by = doc! {
         "$or": [
             {"receiver_id": {"$in": &user_accounts}},
             {"giver_id": {"$in": &user_accounts}},
         ]
     };
+    if transaction_data.is_some() {
+       let  transaction_data =transaction_data.unwrap();
+
     if let Some(account_id) = &transaction_data.account_id {
         filter_by = doc! {
             "$or": [
@@ -281,7 +316,7 @@ pub fn get_transaction(
             ]
         };
         }
-    
+        
     if let Some(currency) = &transaction_data.currency {
         filter_by.insert("currency", currency);
     }
@@ -294,9 +329,13 @@ pub fn get_transaction(
     if let Some(page) = &transaction_data.page {
         filter_by.insert("page", page);
     }
-    
-let transactions: Vec<Transaction> = db.transaction().find_all(Some(filter_by)).unwrap();
-  transactions
+}
+
+    println!("{}",filter_by);
+let transactions = db.transaction().find_all(Some(filter_by));
+// .unwrap_or([]);
+println!("{:?}", transactions);
+  transactions.unwrap()
 }
 
 fn extract_object_id (object_id: &Bson)->ObjectId{

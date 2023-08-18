@@ -1,6 +1,6 @@
 
 
-use mongodb::{results::{InsertOneResult, UpdateResult}, bson::{ Document, doc, oid::ObjectId }, options::{FindOneOptions, UpdateModifications, UpdateOptions}, sync::ClientSession};
+use mongodb::{results::{InsertOneResult, UpdateResult}, bson::{ Document, doc, oid::ObjectId }, options::{FindOneOptions, UpdateModifications, UpdateOptions, FindOptions}, sync::ClientSession};
 use rocket::{State, serde::json::Json};
 
 
@@ -41,15 +41,44 @@ pub fn get_account(db: &State<Database>,find_by:Document,filer_by:Option<FindOne
     db.account().find_one(find_by,filer_by)
 }
 
-pub fn accounts(db: &State<Database>,_currency:Option<String>,user_id:Option<ObjectId>)
+pub fn accounts(db: &State<Database>,_currency:Option<String>,user_id:&Option<ObjectId>)
 ->  Vec<Account> 
 
 {
-    db.account().find(Some(doc!{ "user_id":user_id})).unwrap()
+    db.account().find(Some(doc!{ "user_id":user_id}),None).unwrap()
 }
 
  
-pub fn update_account_transaction(db: &State<Database>,filter_by:Document,update_doc:UpdateModifications,update_option:Option<UpdateOptions>,session:Option<&mut ClientSession>)-> Result<UpdateResult,mongodb::error::Error>{
+pub fn accounts_with_transaction(db: &State<Database>,_currency:Option<String>,user_id:&Option<ObjectId>)
+// ->  Vec<Account> 
+->Vec<Account>
+
+{
+    // FindOptions::Documents;
+    let aggregation_pipeline: Vec<Document> = vec![
+        doc! {
+        "$match":{
+            "user_id":user_id
+               },
+        },
+        doc! {
+        "$lookup": {
+            "from": "Transaction",
+            "localField": "transactions",
+            "foreignField": "_id",
+            "as": "transactions"
+         },
+
+    }
+    ];
+
+     db.account().accounts_with_transactions(aggregation_pipeline,None).unwrap()
+    // .unwrap()
+}
+
+ 
+
+pub fn update_account_transaction(db: &State<Database>,filter_by:&Document,update_doc:&UpdateModifications,update_option:Option<UpdateOptions>,session:Option<&mut ClientSession>)-> Result<UpdateResult,mongodb::error::Error>{
   db.account().update_one(filter_by,update_doc,update_option,session)
 }
 
@@ -62,7 +91,6 @@ pub fn webhook(db: &State<Database>,signature:String,provider_name:String,payloa
 {
     let provider = PaymentProviderHashMap::new();
    let provider_instance =  provider.get_provider_instance(Some(provider_name.as_str())).unwrap();
-    // println!("{:?}",payload);
     // if verify_hash_key(&payload) {
     //     return Err(CustomError::BadRequest("wrong signature".to_string()));
     // }
@@ -79,7 +107,6 @@ pub fn webhook(db: &State<Database>,signature:String,provider_name:String,payloa
         },
         Some(transaction)=>{
             if &eventData.transaction_type != &transaction.transaction_type {
-              //  println!("Unmatched transaction record with event in  transaction-type{:?} of event-type {:?}",transaction.transaction_type,eventData.transaction_type);
                 return None;
             }
             if eventData.transaction_type ==TransactionType::DEPOSIT{
@@ -93,7 +120,6 @@ pub fn webhook(db: &State<Database>,signature:String,provider_name:String,payloa
      return Some(true)
   
 
-    // println!("here {:?}",eventData);
     // Ok(())
     // Ok(None)
 

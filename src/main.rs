@@ -8,12 +8,16 @@ mod database;
 
 use app::{
     user::user_route::{add_user,sign_in,profile},
-    account::account_route::{ account_creation ,deposit,withdraw,transfer_funds,transactions,webhook}
+    account::account_route::{ account_creation ,deposit,withdraw,transfer_funds,transactions,webhook,dashboard}
 };
 
-use modules::cors::make_cors;
+use modules::{cors::make_cors, error_handler::{internal_error, not_found,bad_input}};
 use shuttle_secrets::SecretStore;
- 
+//  use crate::module::error_handler::{
+//     not_found,
+//     internal_error
+
+// };
 
 // #[launch]
 #[shuttle_runtime::main]
@@ -25,7 +29,6 @@ pub async fn rocket(
     let secret = if let Some(secret) = secret_store.get("MONGO_URI") {
         secret
     } else {
-        print!("mp env");
         format!("")
         // return Err(anyhow!("secret was not found").into());
     };
@@ -34,8 +37,9 @@ let db=database::Database::init(&secret);
     let rocket = rocket::build()
 
     .mount("/api", routes![add_user,sign_in,profile])
-    .mount("/api/account", routes![account_creation,deposit,withdraw,transfer_funds,transactions])
+    .mount("/api/account", routes![dashboard,account_creation,deposit,withdraw,transfer_funds,transactions])
     .mount("/", routes![webhook])
+    .register("/", catchers![internal_error, not_found, bad_input])
     .attach(make_cors()).manage(db).into();
 
     //  rocket
