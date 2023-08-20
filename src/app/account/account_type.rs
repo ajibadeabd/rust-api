@@ -1,4 +1,4 @@
-use mongodb::bson::oid::ObjectId;
+use mongodb::bson::{oid::ObjectId, Bson};
 use serde::{Deserialize, Serialize};
 
 
@@ -48,6 +48,22 @@ pub enum TransactionType {
     TRANSFER,
 }
 
+
+
+
+
+impl From<TransactionType> for Bson {
+    fn from(transaction_type: TransactionType) -> Self {
+        match transaction_type {
+            TransactionType::DEPOSIT => Bson::String("deposit".to_string()),
+            TransactionType::TRANSFER => Bson::String("transfer".to_string()),
+            TransactionType::WITHDRAWAL => Bson::String("withdrawal".to_string()),
+            // Handle other cases
+        }
+    }
+}
+
+
 #[derive(Debug, Clone, PartialEq, Serialize,Deserialize)]
 pub enum SupportedCurrency {
     #[serde(rename = "NGN")]
@@ -63,6 +79,8 @@ pub struct TransactionsQueryData {
    pub currency: Option<String>,
    pub limit: Option<String>,
    pub page: Option<String>,
+   pub transaction_type: Option<TransactionType>,
+   
  
 }
 

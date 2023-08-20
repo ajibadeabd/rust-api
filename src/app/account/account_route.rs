@@ -31,13 +31,13 @@ pub async fn deposit(
        account_controller::initialize_deposit(db, deposit_data,auth_user).await 
 }
 
-// #[get("/deposit")]
-// pub async fn get_deposit(
-//     db: &State<Database>,
-//      auth_user: User
-//     )-> Result<CustomResult, CustomError> {
-//        account_controller::get_deposit(db,auth_user).await 
-// }
+#[get("/deposit")]
+pub async fn get_deposit(
+    db: &State<Database>,
+     auth_user: User
+    )-> Result<CustomResult, CustomError> {
+       account_controller::get_deposit(db,auth_user).await 
+}
 #[post("/withdraw", data = "<withdraw_data>")]
 pub async fn withdraw(
     db: &State<Database>,
@@ -83,6 +83,7 @@ pub async fn transactions(
             account_id ,
             page ,
            limit ,
+           transaction_type:None
         },
         auth_user
     ).await

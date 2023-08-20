@@ -8,7 +8,7 @@ mod database;
 
 use app::{
     user::user_route::{add_user,sign_in,profile},
-    account::account_route::{ account_creation ,deposit,withdraw,transfer_funds,transactions,webhook,dashboard}
+    account::account_route::{ account_creation ,deposit,withdraw,transfer_funds,transactions,webhook,dashboard,get_deposit}
 };
 
 use modules::{cors::make_cors, error_handler::{internal_error, not_found,bad_input}};
@@ -37,7 +37,7 @@ let db=database::Database::init(&secret);
     let rocket = rocket::build()
 
     .mount("/api", routes![add_user,sign_in,profile])
-    .mount("/api/account", routes![dashboard,account_creation,deposit,withdraw,transfer_funds,transactions])
+    .mount("/api/account", routes![dashboard,account_creation,deposit,withdraw,transfer_funds,transactions,get_deposit])
     .mount("/", routes![webhook])
     .register("/", catchers![internal_error, not_found, bad_input])
     .attach(make_cors()).manage(db).into();
