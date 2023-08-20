@@ -61,7 +61,7 @@ pub async  fn initialize_deposit(db: &State<Database>,deposit_data:Json<DepositA
         provider_name.clone().unwrap(),
         TransactionType::DEPOSIT,
         TransactionStatus::PENDING,
-        "deposit from bank".to_string()
+        "deposit from bank".to_string(),
         
     );
     let created_transaction = create_transaction(db,&new_transaction).unwrap();
@@ -69,7 +69,7 @@ pub async  fn initialize_deposit(db: &State<Database>,deposit_data:Json<DepositA
     let update_doc = UpdateModifications::Document(
         doc!{ "$push": { "transactions": transaction_id} }
     );
-    let filter_data = doc!{"_id":&user_account_id.unwrap()};
+    let filter_data = doc!{"id":&user_account_id.unwrap()};
     let _ = update_account_transaction(db,&filter_data,&update_doc,None,None);
 
             let provider_instance = get_provider_instance (provider_name.unwrap().as_str()).unwrap();
@@ -82,10 +82,13 @@ pub async  fn initialize_deposit(db: &State<Database>,deposit_data:Json<DepositA
             };  
         let response: DepositResponseDataDetails = provider_instance.initialize_transaction(dto).await?;
         let update_doc = UpdateModifications::Document(
-            doc!{ "provider_reference": &response.transaction_reference} 
+            doc!{ "$set":{"provider_reference": &response.transaction_reference}} 
         );
         println!("{}",response.transaction_reference);
-       let filter_data = doc!{"receiver_id":&user_account_id.unwrap().to_string()};
+       let filter_data = doc!{
+        "_id":transaction_id,
+        "receiver_id":&user_account_id.unwrap().to_string()
+    };
        println!("{:?}",filter_data);
 
 
@@ -317,9 +320,15 @@ pub fn get_transaction(
         };
         }
         
-    if let Some(currency) = &transaction_data.currency {
-        filter_by.insert("currency", currency);
-    }
+        if let Some(currency) = &transaction_data.currency {
+            filter_by.insert("currency", currency);
+        }    
+        if let Some(transaction_type) = &transaction_data.transaction_type {
+            filter_by.insert("transaction_type",transaction_type);
+        }
+
+    
+
     if let Some(transaction_id ) = &transaction_data.transaction_id {
         filter_by.insert("_id", ObjectId::parse_str(transaction_id.trim()).unwrap());
     }
@@ -331,10 +340,8 @@ pub fn get_transaction(
     }
 }
 
-    println!("{}",filter_by);
 let transactions = db.transaction().find_all(Some(filter_by));
 // .unwrap_or([]);
-println!("{:?}", transactions);
   transactions.unwrap()
 }
 

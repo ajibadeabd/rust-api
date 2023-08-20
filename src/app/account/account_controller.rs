@@ -15,7 +15,7 @@ use crate::{
 };
 
 use super::{
-    account_type::{AccountData, DepositAccountData, WithdrawAccountData, TransferPaymentData, TransactionsQueryData, PaymentEventRequestBody, DashboardResponse},
+    account_type::{AccountData, DepositAccountData, WithdrawAccountData, TransferPaymentData, TransactionsQueryData, PaymentEventRequestBody, DashboardResponse, TransactionType},
     account_service::{self, get_account}, account_model::Account,
 };
 
@@ -103,23 +103,21 @@ pub async fn initialize_deposit(db: &State<Database>,deposit_data: Json<DepositA
         }
     }
 }
-// pub async fn get_deposit(db: &State<Database>, auth_user:User)
-// -> Result<CustomResult, CustomError>
-// {
-//     let new_account = account_service::get_account(db,doc!{
-//         "user_id":auth_user.id,
-//         "currency":&deposit_data.currency,
-//         "channel":"INTERNAL",
-//     }, None).unwrap();
+pub async fn get_deposit(db: &State<Database>, auth_user:User)
+-> Result<CustomResult, CustomError>
+{
+     let query =  TransactionsQueryData {
+        transaction_id: None,
+        limit: None,
+        account_id: None,
+        currency: None,
+        page: None,
+        transaction_type:Some(TransactionType::DEPOSIT)
+      };
+    let response =  transaction_service::transactions(db,Some(query),&auth_user);
 
-//     match new_account {
-//         None=> Err(CustomError::BadRequest(format!("User has no account in {}", deposit_data.currency))),
-//         Some(user_account)=>{
-//            let response =  transaction_service::initialize_deposit(db,deposit_data, user_account.id, auth_user.email).await;
-//     Ok(generic_response ("Deposit link successfully created.",Some(response.unwrap()),Some(Status::Created.code)))
-//         }
-//     }
-// }
+    Ok(generic_response ("Deposit link successfully created.",Some(response),Some(Status::Created.code)))
+}
 
 
 
@@ -137,11 +135,11 @@ pub async fn dashboard(db: &State<Database>,auth_user:User)
 -> Result<CustomResult, CustomError>
 {
     
-     let accounts  = account_service::accounts_with_transaction(db,None,&auth_user.id);
-    //  let response = DashboardResponse{
-    //     accounts,
-    //     transactions`    
-    //  };
+    //  let accounts  = account_service::accounts_with_transaction(db,None,&auth_user.id);
+    // //  let response = DashboardResponse{
+    // //     accounts,
+    // //     transactions`    
+    // //  };
 
       let query_param = TransactionsQueryData {
         // limit:Some("2".to_owned()),
@@ -150,10 +148,10 @@ pub async fn dashboard(db: &State<Database>,auth_user:User)
         account_id: None,
         currency: None,
         page: None,
+        transaction_type:None
       };
      let accounts = account_service::accounts(db,None,&auth_user.id);
      let transactions = transaction_service::transactions(db,Some(query_param),&auth_user);
-     println!("{:?}",transactions);
 let response = DashboardResponse {
     accounts,
     transactions
